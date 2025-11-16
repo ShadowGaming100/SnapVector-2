@@ -7,6 +7,10 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="style.css">
         <link rel="icon" href="SnapServe_wave.png" type="image/png">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer" />
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -23,177 +27,196 @@
             <div id="auth-view" class="hidden space-y-6">
                 <h1
                     class="text-4xl font-extrabold text-center text-white tracking-tight">
-                    Welcome to ImageShare
+                    Welcome to SnapServe
                 </h1>
 
                 <form id="login-form" class="space-y-4">
                     <h2
-                        class="text-2xl font-semibold text-center text-white">Login</h2>
+                        class="text-2xl font-semibold text-white text-center">Login</h2>
                     <div>
                         <label for="login-username"
-                            class="block text-sm font-medium text-gray-300">Username</label>
-                        <input type="text" id="login-username" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            class="block mb-2 text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="login-username"
+                            class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                            required>
                     </div>
                     <div>
                         <label for="login-password"
-                            class="block text-sm font-medium text-gray-300">Password</label>
-                        <input type="password" id="login-password" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            class="block mb-2 text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="login-password"
+                            class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                            required>
                     </div>
                     <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        class="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center shadow-lg">
                         Login
                     </button>
+                    <div class="text-center text-sm text-gray-400">
+                        Don't have an account? <a href="#" id="show-register"
+                            class="text-indigo-400 hover:text-indigo-300 font-medium">Register</a>
+                    </div>
                 </form>
 
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center"><span
-                            class="w-full border-t border-gray-600"></span></div>
-                    <div class="relative flex justify-center text-sm"><span
-                            class="px-2 bg-gray-800 text-gray-400">Or</span></div>
+                <div class="flex items-center space-x-2">
+                    <hr class="flex-grow border-gray-600">
+                    <span class="text-gray-400 text-sm">OR</span>
+                    <hr class="flex-grow border-gray-600">
                 </div>
 
-                <form id="register-form" class="space-y-4">
+                <button id="guest-login-button"
+                    class="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center shadow-lg">
+                    Login as Guest
+                </button>
+
+                <form id="register-form" class="space-y-4 hidden">
                     <h2
-                        class="text-2xl font-semibold text-center text-white">Register</h2>
+                        class="text-2xl font-semibold text-white text-center">Register</h2>
                     <div>
                         <label for="register-username"
-                            class="block text-sm font-medium text-gray-300">Username</label>
-                        <input type="text" id="register-username" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            class="block mb-2 text-sm font-medium text-gray-300">Username</label>
+                        <input type="text" id="register-username"
+                            class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                            required>
                     </div>
                     <div>
                         <label for="register-password"
-                            class="block text-sm font-medium text-gray-300">Password</label>
-                        <input type="password" id="register-password" required
-                            class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            class="block mb-2 text-sm font-medium text-gray-300">Password</label>
+                        <input type="password" id="register-password"
+                            class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"
+                            required>
                     </div>
                     <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-gray-600 hover:bg-gray-700">
+                        class="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center shadow-lg">
                         Register
                     </button>
+                    <div class="text-center text-sm text-gray-400">
+                        Already have an account? <a href="#" id="show-login"
+                            class="text-indigo-400 hover:text-indigo-300 font-medium">Login</a>
+                    </div>
                 </form>
             </div>
 
             <div id="app-view" class="hidden space-y-6">
 
-                <div class="flex justify-between items-center">
-                    <h1
-                        class="text-3xl font-extrabold text-white tracking-tight">
-                        My Image Host
-                    </h1>
-                    <div>
+                <div
+                    class="flex justify-between items-center pb-4 border-b border-gray-700">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-6 h-6 text-indigo-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"><path
+                                stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         <span id="user-greeting"
-                            class="text-gray-400 mr-4"></span>
-                        <button id="logout-button"
-                            class="text-sm text-indigo-400 hover:text-indigo-300 font-medium">Logout</button>
+                            class="text-lg font-bold text-white"></span>
                     </div>
+                    <button id="logout-button"
+                        class="text-sm font-medium text-red-400 hover:text-red-300">
+                        Logout
+                    </button>
                 </div>
 
-                <form id="upload-form" class="space-y-4">
-                    <label for="file-upload"
-                        class="block text-sm font-medium text-gray-300">Upload a
-                        New Image</label>
+                <div id="uploader-view" class="space-y-6">
+                    <h2
+                        class="text-3xl font-semibold text-white">Upload Your
+                        Image</h2>
 
-                    <div id="drop-zone"
-                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md upload-zone">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-500"
-                                stroke="currentColor" fill="none"
-                                viewBox="0 0 48 48" aria-hidden="true">
-                                <path
-                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0l-4.128 4.128M32 16h.01"
-                                    stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" />
-                            </svg>
+                    <form id="upload-form" class="space-y-4">
+                        <label for="file-upload"
+                            class="block text-sm font-medium text-gray-300 sr-only">Image
+                            File</label>
+
+                        <label for="file-upload" id="drop-zone"
+                            class="upload-zone flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-700/50 hover:bg-gray-700 transition duration-200">
                             <div
-                                class="flex text-sm text-gray-400 justify-center">
-                                <label for="file-upload"
-                                    class="relative cursor-pointer bg-gray-800 rounded-md font-medium text-indigo-400 hover:text-indigo-300">
-                                    <span>Choose a file</span>
-                                    <input id="file-upload" name="file"
-                                        type="file" required class="sr-only"
-                                        accept="image/png, image/jpeg, image/gif, image/webp">
-                                </label>
-                                <p class="pl-1 hidden sm:block">or drag and
-                                    drop</p>
+                                class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i
+                                    class="fa-solid fa-upload w-8 h-8 mb-4 text-gray-400 text-3xl"></i>
+                                <p class="mb-2 text-sm text-gray-400"><span
+                                        class="font-semibold text-indigo-400 hover:text-indigo-300 transition duration-150">Click
+                                        to
+                                        upload</span>
+                                    or drag and drop</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF,
+                                    WEBP (MAX. 10MB)</p>
                             </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF,
-                                WEBP</p>
+                            <input id="file-upload" type="file"
+                                class="sr-only"
+                                accept="image/png, image/jpeg, image/gif, image/webp" />
+                        </label>
+
+                        <div id="preview-zone" class="hidden space-y-4">
+                            <h3 class="text-lg font-medium text-white">File
+                                Preview:</h3>
+                            <div class="relative">
+                                <img id="file-preview"
+                                    class="w-full max-h-64 object-contain rounded-lg border border-gray-700 bg-gray-900 p-2"
+                                    alt="File Preview">
+                                <button type="button"
+                                    id="clear-preview-button"
+                                    class="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition duration-200">
+                                    <svg class="w-4 h-4" fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="preview-zone" class="hidden mt-1 space-y-2">
-                        <p class="text-sm font-medium text-gray-300">Image
-                            Preview:</p>
-                        <img id="file-preview" src alt="Image preview"
-                            class="max-w-full h-auto rounded-lg mx-auto border border-gray-600" />
-                        <button type="button" id="clear-preview-button"
-                            class="text-sm text-red-500 hover:text-red-400 w-full">
-                            Clear & Choose Another File
+                        <button type="submit" id="submit-button" disabled
+                            class="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center opacity-50 cursor-not-allowed shadow-lg flex items-center justify-center space-x-2 transition duration-200">
+                            <i id="upload-icon" class="fa-solid fa-upload"></i>
+                            <span id="button-text">Upload Image</span>
+                            <svg id="loading-indicator"
+                                class="hidden animate-spin h-5 w-5 text-white ml-3"
+                                xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12"
+                                    r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
                         </button>
-                    </div>
+                    </form>
+                </div>
 
-                    <div class="pt-2">
-                        <label for="expiration-select"
-                            class="block text-sm font-medium text-gray-300">Delete
-                            Image After:</label>
-                        <select id="expiration-select" name="expiration"
-                            class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 bg-gray-700 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <option value="never">Never</option>
-                            <option value="5_min">5 Minutes</option>
-                            <option value="15_min">15 Minutes</option>
-                            <option value="30_min">30 Minutes</option>
-                            <option value="1_hour">1 Hour</option>
-                            <option value="3_hours">3 Hours</option>
-                            <option value="6_hours">6 Hours</option>
-                            <option value="12_hours">12 Hours</option>
-                            <option value="1_day">1 Day</option>
-                            <option value="2_days">2 Days</option>
-                            <option value="3_days">3 Days</option>
-                            <option value="4_days">4 Days</option>
-                            <option value="5_days">5 Days</option>
-                            <option value="6_days">6 Days</option>
-                            <option value="1_week">1 Week</option>
-                            <option value="2_weeks">2 Weeks</option>
-                            <option value="3_weeks">3 Weeks</option>
-                            <option value="1_month">1 Month</option>
-                            <option value="2_months">2 Months</option>
-                            <option value="3_months">3 Months</option>
-                            <option value="4_months">4 Months</option>
-                            <option value="5_months">5 Months</option>
-                            <option value="6_months">6 Months</option>
-                        </select>
-                    </div>
-                    <button type="submit" id="submit-button"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                        Host Image
-                    </button>
-                    <div id="loading-indicator"
-                        class="hidden text-center text-indigo-400">Uploading...</div>
-                </form>
-
-                <div id="details-view" class="hidden text-center space-y-4">
+                <div id="details-view" class="hidden space-y-4">
                     <h2 id="details-title"
-                        class="text-2xl font-semibold text-green-400">Upload
-                        Successful!</h2>
-                    <div
-                        class="border-2 border-dashed border-gray-600 rounded-lg p-4 bg-gray-700">
-                        <img id="image-preview" src alt="Hosted Image"
-                            class="max-w-full h-auto rounded-lg mx-auto" />
+                        class="text-3xl font-semibold text-white">Image
+                        Details</h2>
+                    <img id="image-preview"
+                        class="w-full max-h-96 object-contain rounded-lg border border-gray-700 bg-gray-900 p-2"
+                        alt="Uploaded Image">
+
+                    <div class="space-y-2">
+                        <label for="share-link"
+                            class="block text-sm font-medium text-gray-300">Sharable
+                            Link</label>
+                        <input type="text" id="share-link" readonly
+                            class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg block w-full p-2.5 cursor-pointer">
                     </div>
+
                     <div class="flex space-x-2">
-                        <input type="text" id="share-link" value readonly
-                            class="flex-1 p-3 border border-gray-600 rounded-lg text-sm bg-gray-600 text-white">
+                        <button id="delete-button"
+                            class="flex-1 text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center shadow-lg">
+                            Delete Image
+                        </button>
                         <button id="copy-button"
-                            class="px-4 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
-                            Copy
+                            class="flex-1 text-white bg-indigo-600 rounded-lg shadow-md hover:bg-indigo-700 flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Copy</span>
                         </button>
                     </div>
                     <button id="back-to-uploader-button"
-                        class="inline-block mt-4 text-indigo-400 hover:text-indigo-300 font-medium">
-                        ← Back to Uploader
+                        class="inline-flex items-center space-x-1 mt-4 text-indigo-400 hover:text-indigo-300 font-medium">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Back to Uploader</span>
                     </button>
                 </div>
 
@@ -201,6 +224,18 @@
                     <h2
                         class="text-2xl font-semibold text-white border-t border-gray-600 pt-4">Your
                         Hosted Images</h2>
+
+                    <div
+                        class="bg-red-900/50 border border-red-500 rounded-lg p-3">
+                        <p class="text-sm text-red-300 font-medium">
+                            All images are automatically deleted on the <b>1st
+                                of
+                                the next month.</b> Items will show a red border
+                            <b>3
+                                days before deletion.</b>
+                        </p>
+                    </div>
+
                     <div id="image-gallery"
                         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         <p id="no-images-message"
