@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_BASE_URL = 'http://127.0.0.1:5000';
+    const API_BASE_URL = 'staff.rrhosting.eu:7658';
 
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
