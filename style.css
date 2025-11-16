@@ -1,13 +1,7 @@
-/* This file provides minimal custom styling.
-    Most modern styling (spacing, colors, shadows) is handled by Tailwind CSS classes in index.html.
-*/
-
 body {
-    /* Helps browser-native elements like dropdowns match the dark theme */
     color-scheme: dark;
 }
 
-/* Add a subtle animation to the card */
 .custom-card {
     animation: fadeIn 0.5s ease-out;
 }
@@ -24,17 +18,12 @@ body {
     }
 }
 
-/* Visual feedback for the upload zone */
 .upload-zone:hover {
-    /* Updated for dark mode */
     border-color: #6366f1;
-    /* Tailwind indigo-500 */
     background-color: #1f2937;
-    /* Tailwind gray-800 */
     transition: all 0.2s ease;
 }
 
-/* Add hover effect to gallery images */
 .gallery-image {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

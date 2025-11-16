@@ -1,38 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- NEW: Define your backend server's URL ---
-    // Update this to your actual, public backend URL.
-    // "http://127.0.0.1:5000" is the default for local testing.
     const API_BASE_URL = 'http://127.0.0.1:5000';
 
-    // --- View Containers ---
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
     const messageBox = document.getElementById('message-box');
-    // (all other element selections remain the same)
-    // ...
-    // --- Auth Elements ---
+
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     const logoutButton = document.getElementById('logout-button');
     const userGreeting = document.getElementById('user-greeting');
 
-    // --- App Elements ---
     const uploadForm = document.getElementById('upload-form');
     const fileInput = document.getElementById('file-upload');
     const submitButton = document.getElementById('submit-button');
     const loadingIndicator = document.getElementById('loading-indicator');
 
-    // --- Upload Preview Elements ---
     const dropZone = document.getElementById('drop-zone');
     const previewZone = document.getElementById('preview-zone');
     const filePreview = document.getElementById('file-preview');
     const clearPreviewButton = document.getElementById('clear-preview-button');
 
-    // --- NEW: Expiration Element ---
     const expirationSelect = document.getElementById('expiration-select');
 
-    // --- Details View Elements (was Success View) ---
     const detailsView = document.getElementById('details-view');
     const detailsTitle = document.getElementById('details-title');
     const imagePreview = document.getElementById('image-preview');
@@ -40,19 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyButton = document.getElementById('copy-button');
     const backToUploaderButton = document.getElementById('back-to-uploader-button');
 
-    // --- Dashboard Elements ---
     const dashboardView = document.getElementById('dashboard-view');
     const imageGallery = document.getElementById('image-gallery');
     const noImagesMessage = document.getElementById('no-images-message');
 
-    // --- NEW: Polling Timer ---
-    let dashboardPollTimer = null; // To hold the interval ID
+    let dashboardPollTimer = null;
 
-    // =================================================================
-    // --- UTILITY FUNCTIONS ---
-    // =================================================================
-
-    // (showMessage, showLoading, showView functions are unchanged)
     function showMessage(text, type = 'error') {
         messageBox.textContent = text;
         messageBox.classList.remove('hidden', 'bg-red-200', 'text-red-800', 'bg-green-200', 'text-green-800');
@@ -88,11 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Shows the image details view (for new uploads or existing images).
-     * @param {string} url - The full URL of the image to display.
-     * @param {string} title - The title for the view (e.g., "Upload Successful!").
-     */
     function showDetailsView(url, title = "Image Details") {
         uploadForm.classList.add('hidden');
         dashboardView.classList.add('hidden');
@@ -111,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         shareLinkInput.value = url;
     }
 
-    // (resetToMainView function is unchanged)
     function resetToMainView() {
         uploadForm.classList.remove('hidden');
         dashboardView.classList.remove('hidden');
@@ -125,13 +102,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     /**
-     * Fetches and displays all images for the logged-in user.
+     * Handles file selection and updates the preview area.
+     * @param {File} file - The file object to process.
      */
+    function handleFileSelection(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            showMessage("Please select a valid image file.", 'error');
+            fileInput.value = '';
+            return;
+        }
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            filePreview.src = e.target.result;
+            dropZone.classList.add('hidden');
+            previewZone.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
     async function fetchDashboardImages() {
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/my-images`, {
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -151,10 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Renders the image gallery from the fetched data.
-     * @param {Array<object>} images - List of image objects from the API.
-     */
     function renderImageGallery(images) {
         imageGallery.innerHTML = '';
         if (images.length === 0) {
@@ -169,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.className = 'relative group border-2 border-gray-700 rounded-lg overflow-hidden shadow-lg';
 
             const imgElement = document.createElement('img');
-            imgElement.src = image.url; // This is now the full URL from the backend
+            imgElement.src = image.url;
             imgElement.alt = image.original_name;
             imgElement.className = 'w-full h-24 object-cover cursor-pointer gallery-image';
             imgElement.title = `Click to view details for ${image.original_name}`;
@@ -180,7 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteButton.title = 'Delete Image';
 
             imgElement.addEventListener('click', () => {
-                // --- MODIFIED: The URL is already absolute ---
                 const fullUrl = image.url;
                 showDetailsView(fullUrl, "Image Details");
             });
@@ -196,25 +187,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =================================================================
-    // --- API HANDLERS ---
-    // =================================================================
 
-    /**
-     * Handles the login form submission.
-     */
     async function handleLogin(e) {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
             const data = await response.json();
 
@@ -228,21 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Handles the register form submission.
-     */
     async function handleRegister(e) {
         e.preventDefault();
         const username = document.getElementById('register-username').value;
         const password = document.getElementById('register-password').value;
 
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
             const data = await response.json();
 
@@ -256,19 +236,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Handles the logout button click.
-     */
     async function handleLogout() {
         if (dashboardPollTimer) {
             clearInterval(dashboardPollTimer);
             dashboardPollTimer = null;
         }
 
-        // --- MODIFIED: Use full URL and add credentials ---
         await fetch(`${API_BASE_URL}/api/logout`, {
             method: 'POST',
-            credentials: 'include' // Send session cookie
+            credentials: 'include'
         });
 
         showView('auth');
@@ -277,9 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.reset();
     }
 
-    /**
-     * Handles the main upload form submission.
-     */
     async function handleUpload(e) {
         e.preventDefault();
         const file = fileInput.files[0];
@@ -294,22 +267,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showLoading(true);
         messageBox.classList.add('hidden');
-        let data; // Define data here to access in finally block
+        let data;
 
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 body: formData,
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
 
             data = await response.json();
 
             if (data.success) {
                 showMessage("Image hosted successfully!", 'success');
-
-                // --- MODIFIED: The URL is already absolute ---
                 const fullUrl = data.url;
                 showDetailsView(fullUrl, "Upload Successful!");
                 fetchDashboardImages();
@@ -320,32 +290,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showMessage("An error occurred while connecting to the server.", 'error');
             console.error('Fetch error:', error);
+            data = { success: false };
         } finally {
             showLoading(false);
             if (data && data.success) {
-                // --- MODIFIED: The URL is already absolute ---
-                const fullUrl = data.url;
-                resetToMainView();
-                showDetailsView(fullUrl, "Upload Successful!");
+                fileInput.value = '';
+                filePreview.src = '';
+                previewZone.classList.add('hidden');
+                dropZone.classList.remove('hidden');
+                expirationSelect.value = 'never';
             } else {
-                resetToMainView(); // Reset form even on failure
+                resetToMainView();
             }
         }
     }
 
-    /**
-     * Handles the deletion of an image.
-     */
     async function handleDeleteImage(imageId, elementToRemove) {
         if (!confirm("Are you sure you want to delete this image?")) {
             return;
         }
 
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/delete-image/${imageId}`, {
                 method: 'DELETE',
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
             const data = await response.json();
 
@@ -365,10 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =================================================================
-    // --- INITIALIZATION ---
-    // =================================================================
-
     function initializeApp(username) {
         showView('app');
         userGreeting.textContent = `Hi, ${username}!`;
@@ -378,15 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dashboardPollTimer) {
             clearInterval(dashboardPollTimer);
         }
-        // Poll every 5 minutes (300000 milliseconds)
         dashboardPollTimer = setInterval(fetchDashboardImages, 300000);
     }
 
     async function checkUserSession() {
         try {
-            // --- MODIFIED: Use full URL and add credentials ---
             const response = await fetch(`${API_BASE_URL}/api/session`, {
-                credentials: 'include' // Send session cookie
+                credentials: 'include'
             });
             const data = await response.json();
             if (data.success) {
@@ -399,24 +361,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Attach Event Listeners ---
-    // (No changes to this section)
     loginForm.addEventListener('submit', handleLogin);
     registerForm.addEventListener('submit', handleRegister);
     logoutButton.addEventListener('click', handleLogout);
     uploadForm.addEventListener('submit', handleUpload);
     backToUploaderButton.addEventListener('click', resetToMainView);
 
-    fileInput.addEventListener('change', () => {
-        const file = fileInput.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                filePreview.src = e.target.result;
-                dropZone.classList.add('hidden');
-                previewZone.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
+    fileInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files[0]);
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    dropZone.addEventListener('dragenter', () => {
+        dropZone.classList.add('border-indigo-500', 'bg-gray-700');
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-gray-700');
+        });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        if (dt.files.length > 0) {
+            handleFileSelection(dt.files[0]);
+        } else {
+            showMessage("No file dropped.", 'error');
         }
     });
 
