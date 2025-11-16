@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyButton = document.getElementById('copy-button');
     const backToUploaderButton = document.getElementById('back-to-uploader-button');
     const deleteButton = document.getElementById('delete-button');
+
+    const expirationInfoBox = document.getElementById('expiration-info');
+    const expirationText = document.getElementById('expiration-text').querySelector('span');
+
     let currentImageId = null;
 
     const dashboardView = document.getElementById('dashboard-view');
@@ -89,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 noImagesMessage.classList.add('hidden');
                 images.forEach(image => {
-                    const expiryClass = image.is_expiring_soon ? 'border-red-500' : 'border-gray-600';
+                    const expiryClass = image.is_expiring_soon ? 'border-2 border-red-500' : 'border-gray-600';
 
                     const item = document.createElement('div');
                     item.className = `relative group rounded-lg overflow-hidden border ${expiryClass} bg-gray-700 shadow-xl cursor-pointer gallery-image`;
@@ -278,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const MAX_SIZE = 10 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            showMessage(`File size exceeds the 5MB limit. Your file is ${Math.round(file.size / 1024 / 1024 * 10) / 10}MB.`, 'error');
+            showMessage(`File size exceeds the 10MB limit. Your file is ${Math.round(file.size / 1024 / 1024 * 10) / 10}MB.`, 'error');
             fileInput.value = '';
             submitButton.disabled = true;
             submitButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -389,6 +393,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
+     * Truncates a filename if it's too long, cutting it off at a random-ish point.
+     * @param {string} filename - The original filename.
+     * @param {number} maxLength - The maximum desired length.
+     * @returns {string} The truncated filename.
+     */
+    function truncateFilename(filename, maxLength = 30) {
+        if (filename.length <= maxLength) {
+            return filename;
+        }
+
+        const extensionMatch = filename.match(/\.([0-9a-z]+)$/i);
+        const extension = extensionMatch ? extensionMatch[0] : '';
+        const baseName = extensionMatch ? filename.slice(0, -extension.length) : filename;
+
+        const maxBaseLength = maxLength - extension.length - 3;
+
+        if (maxBaseLength <= 0) {
+            return filename.substring(0, maxLength - 3) + '...';
+        }
+
+        const cutoff = Math.floor(Math.random() * (maxBaseLength * 0.4)) + Math.floor(maxBaseLength * 0.4);
+
+        return baseName.substring(0, cutoff) + '...' + extension;
+    }
+
+
+    /**
      * Displays the details view for a specific image.
      * @param {number} id - The ID of the image.
      */
@@ -406,11 +437,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailsView.classList.remove('hidden');
 
                 const uploadDate = new Date(data.upload_date).toLocaleDateString();
-                const expiryDate = data.expires_at ? new Date(data.expires_at).toLocaleDateString() : 'Never';
+                const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
 
-                detailsTitle.textContent = `Image Details: ${data.filename}`;
+                detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
+
                 imagePreview.src = data.url;
                 shareLinkInput.value = data.url;
+
+                if (expiryDate) {
+                    const now = new Date();
+                    const diffTime = expiryDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    const formattedExpiryDate = expiryDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    if (diffDays <= 3) {
+                        expirationText.textContent = `PURGE ALERT! This image will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationInfoBox.classList.remove('hidden');
+                    } else {
+                        expirationText.textContent = `This image will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationInfoBox.className = 'bg-blue-900/50 border-2 border-blue-500 rounded-lg p-3';
+                        expirationText.parentElement.classList.remove('text-red-300');
+                        expirationText.parentElement.classList.add('text-blue-300');
+                        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-circle-info';
+
+                        expirationInfoBox.classList.remove('hidden');
+                    }
+                } else {
+                    expirationInfoBox.classList.add('hidden');
+                }
 
                 if (data.is_owner) {
                     deleteButton.classList.remove('hidden');
@@ -465,6 +524,12 @@ document.addEventListener('DOMContentLoaded', () => {
         detailsView.classList.add('hidden');
         document.getElementById('uploader-view').classList.remove('hidden');
         dashboardView.classList.remove('hidden');
+        expirationInfoBox.classList.add('hidden');
+        expirationInfoBox.className = 'bg-red-900/50 border-2 border-red-500 rounded-lg p-3';
+        expirationText.parentElement.classList.remove('text-blue-300');
+        expirationText.parentElement.classList.add('text-red-300');
+        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-triangle-exclamation';
+
         fetchImages();
     });
 
