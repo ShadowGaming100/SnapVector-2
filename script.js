@@ -41,8 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Shows a message box with styling based on type.
-     * @param {string} message - The message to display.
-     * @param {string} type - 'success', 'error', or 'info'.
      */
     function showMessage(message, type = 'info') {
         const baseClasses = 'p-4 text-sm rounded-lg transition-opacity duration-300';
@@ -73,18 +71,18 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Fetches a resource with a specified timeout.
      * @param {string} url - The URL to fetch.
-     * @param {object} options - Fetch options (method, headers, body, etc.).
+     * @param {object} options - Fetch options.
      * @param {number} timeout - Timeout in milliseconds.
      * @returns {Promise<Response>} A promise that resolves with the fetch Response.
      */
     async function fetchWithTimeout(url, options = {}, timeout = 8000) {
         const controller = new AbortController();
         const signal = controller.signal;
-        options.signal = signal;
+        options.signal = signal; 
 
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
-                controller.abort();
+                controller.abort(); 
                 reject(new Error('Request timed out'));
             }, timeout);
         });
@@ -156,8 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Updates the UI based on authentication status.
-     * @param {boolean} isAuthenticated - Whether the user is logged in.
-     * @param {object|null} userData - User data (username, is_guest) or null.
      */
     function updateUI(isAuthenticated, userData = null) {
         if (isAuthenticated) {
@@ -204,8 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Handles authentication (Login or Register).
-     * @param {string} endpoint - '/login' or '/register'.
-     * @param {object} credentials - { username, password }.
      */
     async function handleAuth(endpoint, credentials) {
         try {
@@ -320,7 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Validates and previews the selected file.
-     * @param {File} file - The file to process.
      */
     function handleFileSelection(file) {
         if (!file) return;
@@ -444,10 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Truncates a filename if it's too long, cutting it off at a random-ish point.
-     * @param {string} filename - The original filename.
-     * @param {number} maxLength - The maximum desired length.
-     * @returns {string} The truncated filename.
+     * Truncates a filename if it's too long.
      */
     function truncateFilename(filename, maxLength = 30) {
         if (filename.length <= maxLength) {
@@ -472,7 +462,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Displays the details view for a specific image.
-     * @param {number} id - The ID of the image.
      */
     async function showDetailsView(id) {
         currentImageId = id;
@@ -488,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardView.classList.add('hidden');
                 detailsView.classList.remove('hidden');
 
-                const uploadDate = new Date(data.upload_date).toLocaleDateString();
                 const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
 
                 detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
