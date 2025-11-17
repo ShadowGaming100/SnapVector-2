@@ -70,11 +70,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
+    /**
+     * Fetches a resource with a specified timeout.
+     * @param {string} url - The URL to fetch.
+     * @param {object} options - Fetch options (method, headers, body, etc.).
+     * @param {number} timeout - Timeout in milliseconds.
+     * @returns {Promise<Response>} A promise that resolves with the fetch Response.
+     */
+    async function fetchWithTimeout(url, options = {}, timeout = 2000) {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        options.signal = signal;
+
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+                controller.abort();
+                reject(new Error('Request timed out'));
+            }, timeout);
+        });
+
+        const fetchPromise = fetch(url, options);
+
+        return Promise.race([fetchPromise, timeoutPromise]);
+    }
+
+
     async function fetchImages() {
         try {
-            const response = await fetch(`${API_BASE_URL}/images`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/images`, {
                 credentials: 'include'
-            });
+            }, 2000);
 
             if (!response.ok) {
                 if (response.status === 401) {
@@ -121,7 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error fetching images:', error);
-            showMessage('Could not load your images.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Could not load images: The server took too long to respond.', 'error');
+            } else {
+                showMessage('Could not load your images.', 'error');
+            }
         }
     }
 
@@ -151,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkAuthStatus() {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth_status`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/auth_status`, {
                 credentials: 'include'
-            });
+            }, 2000);
 
             if (!response.ok) {
                 throw new Error('Failed to check auth status.');
@@ -164,7 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error checking auth status:', error);
-            showMessage('Connection error. Could not check login status.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Server took too long to respond. Please try again.', 'error');
+            } else {
+                showMessage('Connection error. Could not check login status.', 'error');
+            }
             updateUI(false);
         }
     }
@@ -176,12 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function handleAuth(endpoint, credentials) {
         try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(credentials),
                 credentials: 'include'
-            });
+            }, 2000);
 
             const data = await response.json();
 
@@ -193,7 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Auth error:', error);
-            showMessage('Network or server error during authentication.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Authentication request timed out. Please try again.', 'error');
+            } else {
+                showMessage('Network or server error during authentication.', 'error');
+            }
         }
     }
 
@@ -203,10 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
         guestLoginButton.textContent = 'Creating Guest Account...';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/guest_login`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/guest_login`, {
                 method: 'POST',
                 credentials: 'include'
-            });
+            }, 2000);
 
             const data = await response.json();
 
@@ -218,7 +255,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Guest login error:', error);
-            showMessage('Network or server error during guest login.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Guest login request timed out. Please try again.', 'error');
+            } else {
+                showMessage('Network or server error during guest login.', 'error');
+            }
         } finally {
             guestLoginButton.disabled = false;
             guestLoginButton.textContent = 'Login as Guest (Saves your images)';
@@ -242,10 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutButton.addEventListener('click', async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/logout`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/logout`, {
                 method: 'POST',
                 credentials: 'include'
-            });
+            }, 2000);
 
             const data = await response.json();
 
@@ -257,7 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Logout error:', error);
-            showMessage('Network or server error during logout.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Logout request timed out. Please try again.', 'error');
+            } else {
+                showMessage('Network or server error during logout.', 'error');
+            }
         }
     });
 
@@ -366,11 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/upload`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
-            });
+            }, 2000);
 
             const data = await response.json();
 
@@ -384,11 +429,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Upload error:', error);
-            showMessage('Network or server error during upload.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Upload request timed out. This can happen with large files or slow connections.', 'error');
+            } else {
+                showMessage('Network or server error during upload.', 'error');
+            }
         } finally {
             document.getElementById('button-text').textContent = 'Upload Image';
             loadingIndicator.classList.add('hidden');
-            submitButton.disabled = false;
+            if (fileInput.files[0]) {
+                submitButton.disabled = false;
+            }
         }
     });
 
@@ -426,9 +477,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function showDetailsView(id) {
         currentImageId = id;
         try {
-            const response = await fetch(`${API_BASE_URL}/image/${id}`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/image/${id}`, {
                 credentials: 'include'
-            });
+            }, 2000);
+
             const data = await response.json();
 
             if (data.success) {
@@ -487,7 +539,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Details fetch error:', error);
-            showMessage('Could not load image details.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Could not load image details: The request timed out.', 'error');
+            } else {
+                showMessage('Could not load image details.', 'error');
+            }
             backToUploaderButton.click();
         }
     }
@@ -495,15 +551,11 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
 
-        if (!confirm('Are you sure you want to permanently delete this image?')) {
-            return;
-        }
-
         try {
-            const response = await fetch(`${API_BASE_URL}/image/${currentImageId}`, {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/image/${currentImageId}`, {
                 method: 'DELETE',
                 credentials: 'include'
-            });
+            }, 2000);
 
             const data = await response.json();
 
@@ -515,7 +567,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Delete error:', error);
-            showMessage('Network or server error during deletion.', 'error');
+            if (error.message.includes('timed out')) {
+                showMessage('Delete request timed out. Please try again.', 'error');
+            } else {
+                showMessage('Network or server error during deletion.', 'error');
+            }
         }
     });
 
