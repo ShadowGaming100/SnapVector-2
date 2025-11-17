@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button');
     const userGreeting = document.getElementById('user-greeting');
 
+    const toggleLoginPassword = document.getElementById('toggle-login-password');
+    const loginPasswordInput = document.getElementById('login-password');
+    const toggleRegisterPassword = document.getElementById('toggle-register-password');
+    const registerPasswordInput = document.getElementById('register-password');
+
     const uploadForm = document.getElementById('upload-form');
     const fileInput = document.getElementById('file-upload');
     const submitButton = document.getElementById('submit-button');
@@ -270,14 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
+        const password = loginPasswordInput.value;
         handleAuth('/login', { username, password });
     });
 
     registerForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const username = document.getElementById('register-username').value;
-        const password = document.getElementById('register-password').value;
+        const password = registerPasswordInput.value;
         handleAuth('/register', { username, password });
     });
 
@@ -316,6 +321,32 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         registerForm.classList.add('hidden');
         loginForm.classList.remove('hidden');
+    });
+
+    /**
+     * Toggles the visibility of a password input field.
+     * @param {HTMLInputElement} input - The password input element.
+     * @param {HTMLElement} toggleButton - The button (or icon) that triggers the toggle.
+     */
+    function togglePasswordVisibility(input, toggleButton) {
+        const icon = toggleButton.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    toggleLoginPassword.addEventListener('click', () => {
+        togglePasswordVisibility(loginPasswordInput, toggleLoginPassword);
+    });
+
+    toggleRegisterPassword.addEventListener('click', () => {
+        togglePasswordVisibility(registerPasswordInput, toggleRegisterPassword);
     });
 
     /**
@@ -415,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
-            }, 8000); 
+            }, 120000);
 
             const data = await response.json();
 
@@ -548,22 +579,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- NEW COPY FUNCTIONALITY START ---
 
     copyButton.addEventListener('click', handleCopy);
 
-    /**
-     * Handles the copy action for the share link using the Clipboard API.
-     * Provides visual feedback on success.
-     */
     function handleCopy() {
         const textToCopy = shareLinkInput.value;
 
-        // Modern method using Clipboard API (highly reliable on PC and mobile)
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
-                    // Success feedback
                     const originalText = copyButton.innerHTML;
                     copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
                     copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
@@ -576,12 +600,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                 })
                 .catch(err => {
-                    // Fallback if writeText fails (e.g., permission issue)
                     console.error('Copy failed using navigator.clipboard.writeText:', err);
                     showMessage('Could not automatically copy the link. Please copy it manually.', 'error');
                 });
         } else {
-            // Deprecated fallback for very old browsers or limited environments
             shareLinkInput.select();
             try {
                 document.execCommand('copy');
@@ -593,7 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- NEW COPY FUNCTIONALITY END ---
 
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
