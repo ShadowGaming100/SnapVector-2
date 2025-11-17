@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetchWithTimeout(`${API_BASE_URL}/image/${id}`, {
                 credentials: 'include'
             }, 8000); 
-            
+
             const data = await response.json();
 
             if (data.success) {
@@ -547,6 +547,53 @@ document.addEventListener('DOMContentLoaded', () => {
             backToUploaderButton.click();
         }
     }
+
+    // --- NEW COPY FUNCTIONALITY START ---
+
+    copyButton.addEventListener('click', handleCopy);
+
+    /**
+     * Handles the copy action for the share link using the Clipboard API.
+     * Provides visual feedback on success.
+     */
+    function handleCopy() {
+        const textToCopy = shareLinkInput.value;
+
+        // Modern method using Clipboard API (highly reliable on PC and mobile)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // Success feedback
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                    copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                    copyButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                        copyButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        copyButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                    }, 2000);
+                })
+                .catch(err => {
+                    // Fallback if writeText fails (e.g., permission issue)
+                    console.error('Copy failed using navigator.clipboard.writeText:', err);
+                    showMessage('Could not automatically copy the link. Please copy it manually.', 'error');
+                });
+        } else {
+            // Deprecated fallback for very old browsers or limited environments
+            shareLinkInput.select();
+            try {
+                document.execCommand('copy');
+                showMessage('Link copied using fallback method.', 'success');
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                showMessage('Could not copy the link. Please copy it manually.', 'error');
+            }
+        }
+    }
+
+    // --- NEW COPY FUNCTIONALITY END ---
 
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
