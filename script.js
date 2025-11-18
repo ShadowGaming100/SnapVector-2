@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_BASE_URL = 'https://snapserve-server.sayrz.com'; 
+    const API_BASE_URL = 'https://snapserve-server.sayrz.com';
 
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file) return;
 
         // --- ADDED: Client-side file size check ---
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 15 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
             const formattedSize = formatFileSize(file.size);
             showMessage(`File size exceeds the 10MB limit. Your file is ${formattedSize}.`, 'error');
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/mp4', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             showMessage('Invalid file type. Only PNG, JPG, JPEG, GIF, and WEBP are allowed.', 'error');
             fileInput.value = '';
