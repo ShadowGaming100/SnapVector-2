@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_BASE_URL = 'https://snapserve-server.sayrz.com';
+    // FIXED: Use localhost for local development
+    const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://127.0.0.1:7872'
+        : 'https://snapserve-server.sayrz.com';
 
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
@@ -44,11 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageGallery = document.getElementById('image-gallery');
     const noImagesMessage = document.getElementById('no-images-message');
 
-    /**
-     * Shows a message box with styling based on type.
-     * @param {string} message - The message to display.
-     * @param {string} type - 'success', 'error', or 'info'.
-     */
     function showMessage(message, type = 'info') {
         const baseClasses = 'p-4 text-sm rounded-lg transition-opacity duration-300';
         let typeClasses = '';
@@ -75,13 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    /**
-     * Fetches a resource with a specified timeout.
-     * @param {string} url - The URL to fetch.
-     * @param {object} options - Fetch options (method, headers, body, etc.).
-     * @param {number} timeout - Timeout in milliseconds.
-     * @returns {Promise<Response>} A promise that resolves with the fetch Response.
-     */
     async function fetchWithTimeout(url, options = {}, timeout = 8000) {
         const controller = new AbortController();
         const signal = controller.signal;
@@ -99,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return Promise.race([fetchPromise, timeoutPromise]);
     }
 
-
     async function fetchImages() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/images`, {
@@ -115,9 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const images = await response.json();
+            
+            // FIXED: Clear gallery first
             imageGallery.innerHTML = '';
 
-            if (images.length === 0) {
+            if (!images || images.length === 0) {
                 noImagesMessage.classList.remove('hidden');
                 imageGallery.appendChild(noImagesMessage);
             } else {
@@ -129,11 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.className = `relative group rounded-lg overflow-hidden border ${expiryClass} bg-gray-700 shadow-xl cursor-pointer gallery-image`;
                     item.setAttribute('data-image-id', image.id);
 
-                    // --- MODIFIED: Use image.url for src to respect cache-control headers ---
                     const img = document.createElement('img');
-                    img.src = image.url; // This URL now sends no-cache headers
+                    img.src = image.url;
                     img.alt = `Uploaded on ${new Date(image.upload_date).toLocaleDateString()}`;
                     img.className = 'w-full h-32 object-cover transition duration-300';
+                    
+                    // FIXED: Add error handling for images
+                    img.onerror = function() {
+                        console.error('Failed to load image:', image.url);
+                        this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23374151" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%239CA3AF" dy=".3em"%3EError%3C/text%3E%3C/svg%3E';
+                    };
 
                     const overlay = document.createElement('div');
                     overlay.className = 'absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300';
@@ -152,19 +149,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error fetching images:', error);
+            // FIXED: Don't show the "no images" message on error
+            imageGallery.innerHTML = '';
+            const errorMsg = document.createElement('p');
+            errorMsg.className = 'text-red-400 col-span-full text-center';
+            errorMsg.textContent = 'Failed to load images. Please try refreshing.';
+            imageGallery.appendChild(errorMsg);
+            
             if (error.message.includes('timed out')) {
                 showMessage('Could not load images: The server took too long to respond.', 'error');
             } else {
-                showMessage('Could not load your images.', 'error');
+                showMessage('Could not load your images. Check if the server is running.', 'error');
             }
         }
     }
 
-    /**
-     * Updates the UI based on authentication status.
-     * @param {boolean} isAuthenticated - Whether the user is logged in.
-     * @param {object|null} userData - User data (username, is_guest) or null.
-     */
     function updateUI(isAuthenticated, userData = null) {
         if (isAuthenticated) {
             authView.classList.add('hidden');
@@ -202,17 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.message.includes('timed out')) {
                 showMessage('Server took too long to respond. Please try again.', 'error');
             } else {
-                showMessage('Connection error. Could not check login status.', 'error');
+                showMessage('Connection error. Make sure the backend server is running.', 'error');
             }
             updateUI(false);
         }
     }
 
-    /**
-     * Handles authentication (Login or Register).
-     * @param {string} endpoint - '/login' or '/register'.
-     * @param {object} credentials - { username, password }.
-     */
     async function handleAuth(endpoint, credentials) {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}${endpoint}`, {
@@ -254,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
-                showMessage(`Welcome! Your guest account (${data.username}) has been created. Your uploads will be saved under this unique ID!`, 'success');
+                showMessage(`Welcome! Your guest account (${data.username}) has been created.`, 'success');
                 updateUI(true, data);
             } else {
                 showMessage(data.error || 'Failed to create guest account.', 'error');
@@ -268,10 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } finally {
             guestLoginButton.disabled = false;
-            guestLoginButton.textContent = 'Login as Guest (Saves your images)';
+            guestLoginButton.textContent = 'Login as Guest';
         }
     });
-
 
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -324,11 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.remove('hidden');
     });
 
-    /**
-     * Toggles the visibility of a password input field.
-     * @param {HTMLInputElement} input - The password input element.
-     * @param {HTMLElement} toggleButton - The button (or icon) that triggers the toggle.
-     */
     function togglePasswordVisibility(input, toggleButton) {
         const icon = toggleButton.querySelector('i');
         if (input.type === 'password') {
@@ -350,12 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
         togglePasswordVisibility(registerPasswordInput, toggleRegisterPassword);
     });
 
-    // --- ADDED: Helper function to format file size ---
-    /**
-     * Formats bytes into a human-readable string (KB, MB, GB).
-     * @param {number} bytes - The file size in bytes.
-     * @returns {string} The formatted file size.
-     */
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -364,14 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    /**
-     * Validates and previews the selected file.
-     * @param {File} file - The file to process.
-     */
     function handleFileSelection(file) {
         if (!file) return;
 
-        // --- ADDED: Client-side file size check ---
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
             const formattedSize = formatFileSize(file.size);
@@ -441,7 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.classList.add('opacity-50', 'cursor-not-allowed');
     });
 
-
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -459,23 +435,19 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', file);
 
         try {
-            // Note: Timeout increased for large file uploads
             const response = await fetchWithTimeout(`${API_BASE_URL}/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
             }, 120000); 
 
-            // --- MODIFIED: This block now handles all server responses, including 413 ---
             const data = await response.json();
 
-            if (data.success) { // 'success' is True only on 200 OK
+            if (data.success) {
                 showMessage('Image uploaded successfully!', 'success');
                 clearPreviewButton.click();
                 showDetailsView(data.details_id);
             } else {
-                // This will now catch the error from our @app.errorhandler(413)
-                // as well as any other { 'success': False, 'error': ... } response
                 showMessage(data.error || 'An unknown error occurred.', 'error');
             }
 
@@ -484,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.message.includes('timed out')) {
                 showMessage('Upload request timed out. This can happen with large files or slow connections.', 'error');
             } else {
-                // This catches network errors (e.g., server down)
                 showMessage('Network or server error during upload.', 'error');
             }
         } finally {
@@ -496,12 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    /**
-     * Truncates a filename if it's too long, cutting it off at a random-ish point.
-     * @param {string} filename - The original filename.
-     * @param {number} maxLength - The maximum desired length.
-     * @returns {string} The truncated filename.
-     */
     function truncateFilename(filename, maxLength = 30) {
         if (filename.length <= maxLength) {
             return filename;
@@ -522,11 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return baseName.substring(0, cutoff) + '...' + extension;
     }
 
-
-    /**
-     * Displays the details view for a specific image.
-     * @param {number} id - The ID of the image.
-     */
     async function showDetailsView(id) {
         currentImageId = id;
         try {
@@ -546,8 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
 
-                // --- MODIFIED: Use data.url to respect cache-control headers ---
-                imagePreview.src = data.url; // This URL now sends no-cache headers
+                imagePreview.src = data.url;
                 shareLinkInput.value = data.url;
 
                 if (expiryDate) {
@@ -602,7 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     copyButton.addEventListener('click', handleCopy);
 
     function handleCopy() {
@@ -624,19 +582,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch(err => {
                     console.error('Copy failed using navigator.clipboard.writeText:', err);
-                    // Fallback for http or iframe restrictions
                     fallbackCopy();
                 });
         } else {
-            // Fallback for older browsers
-           fallbackCopy();
+            fallbackCopy();
         }
     }
 
-    // --- ADDED: Fallback copy method using document.execCommand ---
     function fallbackCopy() {
         shareLinkInput.select();
-        shareLinkInput.setSelectionRange(0, 99999); // For mobile devices
+        shareLinkInput.setSelectionRange(0, 99999);
         try {
             const successful = document.execCommand('copy');
             if (successful) {
@@ -658,7 +613,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Could not copy the link. Please copy it manually.', 'error');
         }
     }
-
 
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
