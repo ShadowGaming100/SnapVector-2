@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_BASE_URL = 'https://snapserve-server.sayrz.com';
+    const API_BASE_URL = 'http://104.28.196.198:7872';
 
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
