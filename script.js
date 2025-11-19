@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardView = document.getElementById('dashboard-view');
     const imageGallery = document.getElementById('image-gallery');
     const noImagesMessage = document.getElementById('no-images-message');
-    const cors = require("cors");
 
 
     function showMessage(message, type = 'info') {
