@@ -44,6 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageGallery = document.getElementById('image-gallery');
     const noImagesMessage = document.getElementById('no-images-message');
 
+    const cors = require("cors");
+
+    app.use(cors({
+      origin: "https://snapserve.pages.dev",
+       credentials: true
+    }));
+
     function showMessage(message, type = 'info') {
         const baseClasses = 'p-4 text-sm rounded-lg transition-opacity duration-300';
         let typeClasses = '';
