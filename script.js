@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const API_BASE_URL = 'https://snapserve-server.codelabworks.is-cool.dev';
+    const API_BASE_URL = 'https://snapvector-server.codelabworks.is-cool.dev';
 
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
