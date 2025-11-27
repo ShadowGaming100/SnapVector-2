@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
 
     const API_BASE_URL = 'https://snapvector-server.codelabworks.is-cool.dev';
 
@@ -280,11 +280,16 @@
         if (isAuthenticated && userData) {
             currentUser = { ...userData };
 
-            showView('dashboard');
-            
-            // --- FIX: Load images immediately upon restoring session ---
-            fetchImages(); 
-            // -----------------------------------------------------------
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewId = urlParams.get('view_id');
+
+            if (viewId) {
+                showDetailsView(viewId);
+                fetchImages();
+            } else {
+                showView('dashboard');
+                fetchImages();
+            }
 
             let roleBadge = '';
             if (currentUser.role === 'owner') roleBadge = '👑 Owner';
@@ -623,7 +628,8 @@
                 const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
                 detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
                 imagePreview.src = data.url;
-                shareLinkInput.value = data.url;
+
+                shareLinkInput.value = data.share_url || data.url;
 
                 if (expiryDate) {
                     const now = new Date();
@@ -926,4 +932,3 @@
     checkAuthStatus();
 
 });
-
