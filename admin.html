@@ -185,8 +185,15 @@
             </div>
 
             <div id="tab-content-users" class="tab-content space-y-6">
-                <h2 class="text-2xl font-semibold text-white">User
-                    Management</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-semibold text-white">User
+                        Management</h2>
+                    <button id="refresh-users"
+                        class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
                 <div
                     class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
                     <table class="min-w-full divide-y divide-gray-700">
@@ -398,6 +405,7 @@
             const refreshAnnouncementsBtn = document.getElementById('refresh-announcements');
 
             const userListBody = document.getElementById('user-list-body');
+            const refreshUsersBtn = document.getElementById('refresh-users');
             
             const banListBody = document.getElementById('ban-list-body');
             const refreshBansBtn = document.getElementById('refresh-bans');
@@ -684,6 +692,8 @@
 
 
             async function fetchUsers() {
+                userListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>`;
+                
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/users`, { credentials: 'include' });
                     if (!response.ok) throw new Error('Failed to fetch users');
@@ -725,7 +735,7 @@
                             </button>
                         ` : '';
 
-                        const canDelete = (currentUserRole === 'owner') || (currentUserRole === 'admin' && rawRole !== 'admin' && rawRole !== 'owner') || (currentUserRole === 'moderator' && rawRole === 'user' || rawRole === 'guest');
+                        const canDelete = (currentUserRole === 'owner') || (currentUserRole === 'admin' && rawRole !== 'admin' && rawRole !== 'owner') || (currentUserRole === 'moderator' && (rawRole === 'user' || rawRole === 'guest'));
 
                         const deleteBtnHtml = canDelete ? `
                             <button class="delete-user-btn bg-red-900/30 text-red-500 hover:text-red-300 hover:bg-red-900/60 p-2 rounded-lg transition" data-id="${user.id}" data-username="${user.username}" title="Delete User">
@@ -761,6 +771,9 @@
                     userListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-red-400">Failed to load users.</td></tr>`;
                 }
             }
+            
+            refreshUsersBtn.addEventListener('click', fetchUsers);
+
 
             function addUserEventListeners() {
                 document.querySelectorAll('.view-images-btn').forEach(btn => {
