@@ -282,9 +282,7 @@
 
             showView('dashboard');
             
-            // --- FIX: Load images immediately upon restoring session ---
             fetchImages(); 
-            // -----------------------------------------------------------
 
             let roleBadge = '';
             if (currentUser.role === 'owner') roleBadge = '👑 Owner';
@@ -926,4 +924,3 @@
     checkAuthStatus();
 
 });
-
