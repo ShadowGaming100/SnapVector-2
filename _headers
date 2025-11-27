@@ -2,3 +2,4 @@ Access-Control-Allow-Origin: https://snapvector.pages.dev
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
 Access-Control-Allow-Credentials: true
+Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)
