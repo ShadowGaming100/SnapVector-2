@@ -98,8 +98,15 @@
                         <i class="fa-solid fa-users mr-2"></i>
                         User Management
                     </button>
+                    <button id="tab-btn-bans"
+                        class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                        data-tab="bans">
+                        <i class="fa-solid fa-gavel mr-2"></i>
+                        IP Bans
+                    </button>
                 </nav>
             </div>
+
             <div id="tab-content-announce" class="tab-content active">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="space-y-6">
@@ -210,6 +217,47 @@
                                     <i
                                         class="fa-solid fa-spinner fa-spin mr-2"></i>
                                     Loading users...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-content-bans" class="tab-content space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-semibold text-white">Banned IP
+                        Addresses</h2>
+                    <button id="refresh-bans"
+                        class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+                <div
+                    class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead class="bg-gray-800">
+                            <tr>
+                                <th scope="col"
+                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                    Hashed IP Address</th>
+                                <th scope="col"
+                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                    Banned At (UTC)</th>
+                                <th scope="col"
+                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ban-list-body"
+                            class="divide-y divide-gray-700">
+                            <tr>
+                                <td colspan="3"
+                                    class="py-6 px-4 text-center text-gray-400">
+                                    <i
+                                        class="fa-solid fa-spinner fa-spin mr-2"></i>
+                                    Loading banned IPs...
                                 </td>
                             </tr>
                         </tbody>
@@ -350,6 +398,10 @@
             const refreshAnnouncementsBtn = document.getElementById('refresh-announcements');
 
             const userListBody = document.getElementById('user-list-body');
+            
+            const banListBody = document.getElementById('ban-list-body');
+            const refreshBansBtn = document.getElementById('refresh-bans');
+
 
             const confirmModal = document.getElementById('confirm-modal');
             const confirmTitle = document.getElementById('confirm-modal-title');
@@ -373,6 +425,9 @@
             let confirmResolve = null;
 
             const messageBox = document.getElementById('admin-message-box');
+
+            let usersFetched = false;
+            let bansFetched = false;
 
             async function pingServer() {
                 try {
@@ -404,8 +459,9 @@
                         adminView.classList.remove('hidden');
 
                         pingServer();
-                        await fetchUsers();
                         await fetchActiveAnnouncements();
+                        await fetchUsers(); 
+                        usersFetched = true;
                     } else {
                         showForbidden();
                     }
@@ -421,11 +477,12 @@
             }
 
             tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
+                button.addEventListener('click', async () => {
                     const tab = button.dataset.tab;
 
-                    tabButtons.forEach(btn => btn.classList.remove('active', 'text-indigo-600', 'border-indigo-600'));
-                    button.classList.add('active', 'text-indigo-600', 'border-indigo-600');
+                    tabButtons.forEach(btn => btn.classList.remove('active', 'text-indigo-400', 'border-indigo-400'));
+                    button.classList.add('active', 'text-indigo-400', 'border-indigo-400');
+
 
                     tabContents.forEach(content => {
                         if (content.id === `tab-content-${tab}`) {
@@ -434,6 +491,14 @@
                             content.classList.remove('active');
                         }
                     });
+
+                    if (tab === 'users' && !usersFetched) {
+                        await fetchUsers();
+                        usersFetched = true;
+                    } else if (tab === 'bans' && !bansFetched) {
+                        await fetchBannedIPs();
+                        bansFetched = true;
+                    }
                 });
             });
 
@@ -660,7 +725,7 @@
                             </button>
                         ` : '';
 
-                        const canDelete = (currentUserRole === 'owner') || (currentUserRole === 'admin' && rawRole !== 'admin' && rawRole !== 'owner');
+                        const canDelete = (currentUserRole === 'owner') || (currentUserRole === 'admin' && rawRole !== 'admin' && rawRole !== 'owner') || (currentUserRole === 'moderator' && rawRole === 'user' || rawRole === 'guest');
 
                         const deleteBtnHtml = canDelete ? `
                             <button class="delete-user-btn bg-red-900/30 text-red-500 hover:text-red-300 hover:bg-red-900/60 p-2 rounded-lg transition" data-id="${user.id}" data-username="${user.username}" title="Delete User">
@@ -839,7 +904,7 @@
             async function handleBanUser(userId, username) {
                 const confirmed = await showConfirmModal(
                     `Ban User & IP: ${username}?`,
-                    "This will delete the user, all their images, AND ban their known IP addresses (registration & last seen) from accessing the site. This is not easily reversible.",
+                    "This will delete the user, all their images, AND ban all their known IP addresses (registration, last seen, sessions) from accessing the site. This is not easily reversible.",
                     'bg-red-800 hover:bg-red-700 focus:ring-red-700'
                 );
 
@@ -863,6 +928,82 @@
                     }
                 }
             }
+
+
+            refreshBansBtn.addEventListener('click', fetchBannedIPs);
+
+            async function fetchBannedIPs() {
+                banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>`;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/banned_ips`, { credentials: 'include' });
+                    if (!response.ok) throw new Error('Failed to fetch banned IPs');
+                    const ips = await response.json();
+
+                    banListBody.innerHTML = '';
+                    if (ips.length === 0) {
+                        banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400">No IP addresses are currently banned.</td></tr>`;
+                        return;
+                    }
+
+                    ips.forEach(ip => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-800 transition duration-150 border-b border-gray-700/50 last:border-none";
+                        
+                        const bannedDate = new Date(ip.banned_at).toLocaleString();
+
+                        tr.innerHTML = `
+                            <td class="py-4 px-4 text-sm font-medium text-white font-mono">${ip.hashed_ip}</td>
+                            <td class="py-4 px-4 text-sm text-gray-300">${bannedDate}</td>
+                            <td class="py-4 px-4 text-sm font-medium">
+                                <button class="unban-ip-btn bg-green-900/30 text-green-400 hover:text-white hover:bg-green-600 p-2 rounded-lg transition" data-hash="${ip.hashed_ip}" title="Unban this IP">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </td>
+                        `;
+                        banListBody.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.unban-ip-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const hash = e.currentTarget.dataset.hash;
+                            handleUnbanIP(hash);
+                        });
+                    });
+
+                } catch (error) {
+                    console.error('Fetch bans error:', error);
+                    banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-red-400">Failed to load banned IPs.</td></tr>`;
+                }
+            }
+
+            async function handleUnbanIP(hashedIp) {
+                const confirmed = await showConfirmModal(
+                    `Unban IP: ${hashedIp.substring(0, 12)}...?`,
+                    "This will allow any user from this IP address to access the site again. Are you sure?",
+                    'bg-green-600 hover:bg-green-700 focus:ring-green-500'
+                );
+
+                if (confirmed) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/admin/unban`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ hashed_ip: hashedIp }),
+                            credentials: 'include'
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            showAdminMessage(data.message, 'success');
+                            await fetchBannedIPs();
+                        } else {
+                            showAdminMessage(data.error, 'error');
+                        }
+                    } catch (error) {
+                        showAdminMessage('A network error occurred.', 'error');
+                    }
+                }
+            }
+
 
             checkAdminAuth();
         });
