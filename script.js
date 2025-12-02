@@ -923,5 +923,81 @@
 
     checkAuthStatus();
 
-});
+// Status Indicator System
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const statusModal = document.getElementById('status-modal');
+    const closeStatusModal = document.getElementById('close-status-modal');
+    const apiStatus = document.getElementById('api-status');
+    const statusMessage = document.getElementById('status-message');
+    const lastCheckTime = document.getElementById('last-check-time');
 
+    let statusCheckInterval = null;
+
+    async function checkSystemStatus() {
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/status`, {
+                credentials: 'include'
+            }, 5000);
+            
+            const currentTime = new Date().toLocaleTimeString();
+            lastCheckTime.textContent = currentTime;
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Check if API is operational
+                if (data.status === 'operational' || data.api === 'operational') {
+                    statusDot.className = 'w-2 h-2 rounded-full bg-green-500';
+                    statusText.textContent = 'All Systems Operational';
+                    apiStatus.textContent = 'Operational';
+                    apiStatus.className = 'text-xs font-semibold text-green-400';
+                    statusMessage.classList.add('hidden');
+                } else {
+                    throw new Error('API not operational');
+                }
+            } else {
+                throw new Error('Status check failed');
+            }
+        } catch (error) {
+            // System issues detected
+            statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+            statusText.textContent = 'Service Issues Detected';
+            
+            apiStatus.textContent = 'Unavailable';
+            apiStatus.className = 'text-xs font-semibold text-red-400';
+            
+            statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
+            statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
+            statusMessage.classList.remove('hidden');
+
+            const currentTime = new Date().toLocaleTimeString();
+            lastCheckTime.textContent = currentTime;
+        }
+    }
+
+    statusIndicator.addEventListener('click', () => {
+        statusModal.classList.remove('hidden');
+        checkSystemStatus();
+    });
+
+    closeStatusModal.addEventListener('click', () => {
+        statusModal.classList.add('hidden');
+    });
+
+    statusModal.addEventListener('click', (e) => {
+        if (e.target === statusModal) {
+            statusModal.classList.add('hidden');
+        }
+    });
+
+    // Check status on page load
+    checkSystemStatus();
+
+    // Check status every 60 seconds
+    statusCheckInterval = setInterval(checkSystemStatus, 60000);
+
+    checkAuthStatus();
+
+});
