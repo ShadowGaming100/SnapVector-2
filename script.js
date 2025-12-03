@@ -188,6 +188,215 @@
     }
 
 
+    Gemini
+Unterhaltung mit Gemini
+Fix the problem that when creating an guest account that you get automatically put back to the login page right after the guest account got successfully created
+
+The issue is located in the script.js file.
+
+The Problem
+When you successfully log in (as a guest or user), the updateUI function is called, which immediately runs fetchImages().
+
+If there is a slight delay in the browser setting the session cookie, or if the browser blocks the cookie due to security settings (common on local development), the request to fetch images returns a 401 Unauthorized error.
+
+Currently, the fetchImages function is programmed to immediately log the user out (updateUI(false)) if it encounters a 401 error. This causes the "flash" where you are logged in for a split second and then immediately sent back to the login screen.
+
+The Fix
+We need to modify the fetchImages function in script.js to stop it from aggressively logging the user out on an image fetch error. Instead, it should just fail to load the images gracefully, keeping the user on the dashboard.
+
+Here is the corrected script.js file:
+
+JavaScript
+document.addEventListener('DOMContentLoaded', () => {
+
+    const API_BASE_URL = 'https://snapvector.pulledtheirlife.support';
+
+    let currentUser = {
+        username: null,
+        is_guest: false,
+        role: 'user',
+        is_admin: false
+    };
+
+    const authView = document.getElementById('auth-view');
+    const appView = document.getElementById('app-view');
+    const messageBox = document.getElementById('message-box');
+
+    const uploaderView = document.getElementById('uploader-view');
+    const detailsView = document.getElementById('details-view');
+    const dashboardView = document.getElementById('dashboard-view');
+    const accountView = document.getElementById('account-view');
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const guestLoginButton = document.getElementById('guest-login-button');
+
+    const homeButton = document.getElementById('home-button');
+    const accountButton = document.getElementById('account-button');
+    const logoutButton = document.getElementById('logout-button');
+    const userGreeting = document.getElementById('user-greeting');
+    const adminButton = document.getElementById('admin-button');
+    const announcementBanner = document.getElementById('announcement-banner');
+    let announcementInterval = null;
+
+    const toggleLoginPassword = document.getElementById('toggle-login-password');
+    const loginPasswordInput = document.getElementById('login-password');
+    const toggleRegisterPassword = document.getElementById('toggle-register-password');
+    const registerPasswordInput = document.getElementById('register-password');
+
+    const uploadForm = document.getElementById('upload-form');
+    const fileInput = document.getElementById('file-upload');
+    const submitButton = document.getElementById('submit-button');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const dropZone = document.getElementById('drop-zone');
+    const previewZone = document.getElementById('preview-zone');
+    const filePreview = document.getElementById('file-preview');
+    const clearPreviewButton = document.getElementById('clear-preview-button');
+
+    const detailsTitle = document.getElementById('details-title');
+    const imagePreview = document.getElementById('image-preview');
+    const shareLinkInput = document.getElementById('share-link');
+    const copyButton = document.getElementById('copy-button');
+    const backToUploaderButton = document.getElementById('back-to-uploader-button');
+    const deleteButton = document.getElementById('delete-button');
+    const expirationInfoBox = document.getElementById('expiration-info');
+    const expirationText = document.getElementById('expiration-text').querySelector('span');
+    let currentImageId = null;
+
+    const imageGallery = document.getElementById('image-gallery');
+    const noImagesMessage = document.getElementById('no-images-message');
+
+    const backToDashboardButton = document.getElementById('back-to-dashboard-button');
+    const accountFormsFull = document.getElementById('account-forms-full');
+    const accountFormsGuest = document.getElementById('account-forms-guest');
+
+    const changeUsernameForm = document.getElementById('change-username-form');
+    const newUsernameInput = document.getElementById('new-username');
+
+    const changePasswordForm = document.getElementById('change-password-form');
+    const currentPasswordInput = document.getElementById('current-password');
+    const newPasswordInput = document.getElementById('new-password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+
+    const sessionsList = document.getElementById('sessions-list');
+    const sessionsLoading = document.getElementById('sessions-loading');
+
+    const deleteAccountForm = document.getElementById('delete-account-form');
+    const deletePasswordField = document.getElementById('delete-password-field');
+    const deleteConfirmPasswordInput = document.getElementById('delete-confirm-password');
+
+    /**
+     * Shows a message box with styling based on type.
+     * @param {string} message - The message to display.
+     * @param {string} type - 'success', 'error', or 'info'.
+     */
+    function showMessage(message, type = 'info') {
+        const baseClasses = 'p-4 text-sm rounded-lg transition-opacity duration-300';
+        let typeClasses = '';
+
+        switch (type) {
+            case 'success':
+                typeClasses = 'bg-green-900/50 text-green-300 border border-green-500';
+                break;
+            case 'error':
+                typeClasses = 'bg-red-900/50 text-red-300 border border-red-500';
+                break;
+            case 'info':
+            default:
+                typeClasses = 'bg-blue-900/50 text-blue-300 border border-blue-500';
+                break;
+        }
+
+        messageBox.className = `${baseClasses} ${typeClasses}`;
+        messageBox.innerHTML = message;
+        messageBox.classList.remove('hidden');
+
+        setTimeout(() => {
+            messageBox.classList.add('hidden');
+        }, 5000);
+    }
+
+    function showConfirm(message) {
+        try {
+            return window.confirm(message);
+        } catch (e) {
+            console.warn("window.confirm is blocked. Auto-confirming delete.", e);
+            showMessage("Confirmation dialogs are blocked. Action cancelled.", "error");
+            return false;
+        }
+    }
+
+
+    /**
+     * Fetches a resource with a specified timeout.
+     * @param {string} url - The URL to fetch.
+     * @param {object} options - Fetch options (method, headers, body, etc.).
+     * @param {number} timeout - Timeout in milliseconds.
+     * @returns {Promise<Response>} A promise that resolves with the fetch Response.
+     */
+    async function fetchWithTimeout(url, options = {}, timeout = 8000) {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        options.signal = signal;
+
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+                controller.abort();
+                reject(new Error('Request timed out'));
+            }, timeout);
+        });
+
+        const fetchPromise = fetch(url, options);
+
+        return Promise.race([fetchPromise, timeoutPromise]);
+    }
+
+    function showView(viewToShow) {
+        [authView, appView, uploaderView, detailsView, dashboardView, accountView].forEach(view => {
+            view.classList.add('hidden');
+        });
+
+        if (viewToShow === 'auth') {
+            authView.classList.remove('hidden');
+        } else {
+            appView.classList.remove('hidden');
+            if (viewToShow === 'dashboard') {
+                uploaderView.classList.remove('hidden');
+                dashboardView.classList.remove('hidden');
+            } else if (viewToShow === 'details') {
+                detailsView.classList.remove('hidden');
+            } else if (viewToShow === 'account') {
+                accountView.classList.remove('hidden');
+            }
+        }
+    }
+
+    function showDashboardView() {
+        showView('dashboard');
+        fetchImages();
+    }
+
+    function showAccountView() {
+        showView('account');
+
+        changeUsernameForm.reset();
+        changePasswordForm.reset();
+        deleteAccountForm.reset();
+
+        if (currentUser.is_guest) {
+            accountFormsFull.classList.add('hidden');
+            accountFormsGuest.classList.remove('hidden');
+            deletePasswordField.classList.add('hidden');
+        } else {
+            accountFormsFull.classList.remove('hidden');
+            accountFormsGuest.classList.add('hidden');
+            deletePasswordField.classList.remove('hidden');
+            newUsernameInput.placeholder = currentUser.username;
+            fetchSessions();
+        }
+    }
+
+
     async function fetchImages() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/images`, {
@@ -196,8 +405,12 @@
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    updateUI(false);
-                    return;
+                    // FIX: Removed the automatic logout (updateUI(false)) here.
+                    // If fetching images fails with 401 right after login, we don't want to
+                    // kick the user out immediately. The auth status checker will handle
+                    // genuine session expiry later.
+                    console.warn('Unauthorized access while fetching images.');
+                    throw new Error('Unauthorized');
                 }
                 throw new Error('Failed to fetch images.');
             }
@@ -234,6 +447,9 @@
             console.error('Error fetching images:', error);
             if (error.message.includes('timed out')) {
                 showMessage('Could not load images: The server took too long to respond.', 'error');
+            } else if (error.message === 'Unauthorized') {
+                 // Do nothing, just stay on dashboard
+                 console.log("Session not fully ready yet, or images restricted.");
             } else {
                 showMessage('Could not load your images.', 'error');
             }
