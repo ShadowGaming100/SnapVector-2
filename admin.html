@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>SnapVector Admin Panel</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="icon" href="icon.png" type="image/png">
-        <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-        <style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapVector Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
         body {
@@ -64,325 +63,362 @@
             background-position: right 1rem center;
             background-size: 0.65em auto;
         }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-timeout {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+
+        .badge-info {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
-    </head>
+</head>
 
-    <body class="bg-gray-900 text-gray-200 min-h-screen p-4 md:p-8">
+<body class="bg-gray-900 text-gray-200 min-h-screen p-4 md:p-8">
 
-        <div id="admin-view"
-            class="w-full max-w-7xl mx-auto p-4 md:p-8 bg-gray-800 rounded-lg shadow-xl hidden">
-            <div
-                class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-                <h1 class="text-3xl font-bold text-white">
-                    <i class="fa-solid fa-shield-halved text-indigo-400"></i>
-                    SnapVector Admin Panel
-                </h1>
-                <a href="javascript:window.close();"
-                    class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition duration-200 flex items-center space-x-2">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Close</span>
-                </a>
-            </div>
-
-            <div class="border-b border-gray-700 mb-6">
-                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                    <button id="tab-btn-announce"
-                        class="tab-button active group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
-                        data-tab="announce">
-                        <i class="fa-solid fa-bullhorn mr-2"></i>
-                        Announcements
-                    </button>
-                    <button id="tab-btn-users"
-                        class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
-                        data-tab="users">
-                        <i class="fa-solid fa-users mr-2"></i>
-                        User Management
-                    </button>
-                    <button id="tab-btn-bans"
-                        class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
-                        data-tab="bans">
-                        <i class="fa-solid fa-gavel mr-2"></i>
-                        IP Bans
-                    </button>
-                </nav>
-            </div>
-
-            <div id="tab-content-announce" class="tab-content active">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="space-y-6">
-                        <h2 class="text-2xl font-semibold text-white">Post New
-                            Announcement</h2>
-                        <form id="announcement-form"
-                            class="space-y-6 bg-gray-700/30 p-6 rounded-xl border border-gray-700">
-                            <div>
-                                <label for="announcement-message"
-                                    class="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Message</label>
-                                <textarea id="announcement-message"
-                                    name="message" rows="4"
-                                    class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                                    placeholder="Type your announcement here..."></textarea>
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Expiration</label>
-                                <div class="flex items-center space-x-4">
-                                    <div class="relative flex-1">
-                                        <div
-                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i
-                                                class="fa-regular fa-clock text-gray-500"></i>
-                                        </div>
-                                        <input type="number"
-                                            id="announcement-duration"
-                                            name="duration" value="24" min="1"
-                                            class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
-                                    </div>
-                                    <div class="relative flex-1">
-                                        <select id="announcement-unit"
-                                            name="unit"
-                                            class="custom-select w-full pl-4 pr-10 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer">
-                                            <option value="hours">Hours</option>
-                                            <option value="days">Days</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-2">The
-                                    announcement will automatically disappear
-                                    after
-                                    this time.</p>
-                            </div>
-
-                            <button type="submit" id="submit-announcement"
-                                class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg transform transition hover:-translate-y-0.5 flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                <span>Post Announcement</span>
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-semibold text-white">Active
-                                Announcements</h2>
-                            <button id="refresh-announcements"
-                                class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
-                                <i class="fa-solid fa-rotate"></i>
-                                <span>Refresh</span>
-                            </button>
-                        </div>
-
-                        <div id="active-announcements-list" class="space-y-3">
-                            <div
-                                class="text-center py-8 text-gray-500 bg-gray-700/30 rounded-xl border border-gray-700">
-                                <i
-                                    class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
-                                <p>Loading active announcements...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-content-users" class="tab-content space-y-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-semibold text-white">User
-                        Management</h2>
-                    <button id="refresh-users"
-                        class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
-                        <i class="fa-solid fa-rotate"></i>
-                        <span>Refresh</span>
-                    </button>
-                </div>
-                <div
-                    class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
-                    <table class="min-w-full divide-y divide-gray-700">
-                        <thead class="bg-gray-800">
-                            <tr>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    User</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Role</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Images</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Hashed Reg. IP</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="user-list-body"
-                            class="divide-y divide-gray-700">
-                            <tr>
-                                <td colspan="5"
-                                    class="py-6 px-4 text-center text-gray-400">
-                                    <i
-                                        class="fa-solid fa-spinner fa-spin mr-2"></i>
-                                    Loading users...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="tab-content-bans" class="tab-content space-y-6">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-2xl font-semibold text-white">Banned IP
-                        Addresses</h2>
-                    <button id="refresh-bans"
-                        class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
-                        <i class="fa-solid fa-rotate"></i>
-                        <span>Refresh</span>
-                    </button>
-                </div>
-                <div
-                    class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
-                    <table class="min-w-full divide-y divide-gray-700">
-                        <thead class="bg-gray-800">
-                            <tr>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Hashed IP Address</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Banned At (UTC)</th>
-                                <th scope="col"
-                                    class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                    Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ban-list-body"
-                            class="divide-y divide-gray-700">
-                            <tr>
-                                <td colspan="3"
-                                    class="py-6 px-4 text-center text-gray-400">
-                                    <i
-                                        class="fa-solid fa-spinner fa-spin mr-2"></i>
-                                    Loading banned IPs...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="admin-message-box"
-                class="mt-6 text-sm rounded-lg p-4 hidden transition-all duration-300"></div>
-        </div>
-
-        <div id="loading-view" class="text-center pt-20">
-            <i class="fa-solid fa-spinner fa-spin text-5xl text-indigo-400"></i>
-            <p class="mt-4 text-xl text-gray-300">Loading Admin Panel...</p>
-        </div>
-
-        <div id="forbidden-view"
-            class="text-center p-8 bg-gray-800 rounded-lg shadow-xl hidden max-w-lg mx-auto mt-20">
-            <i class="fa-solid fa-shield-halved text-6xl text-red-500 mb-5"></i>
-            <h1 class="text-4xl font-bold text-red-400 mb-3">Access Denied</h1>
-            <p class="text-lg text-gray-300">You do not have permission to view
-                this page.</p>
+    <div id="admin-view" class="w-full max-w-7xl mx-auto p-4 md:p-8 bg-gray-800 rounded-lg shadow-xl hidden">
+        <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl font-bold text-white">
+                <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+                SnapVector Admin Panel
+            </h1>
             <a href="javascript:window.close();"
-                class="mt-8 inline-block py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition duration-200">Close
-                Window</a>
+                class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-lg transition duration-200 flex items-center space-x-2">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Close</span>
+            </a>
         </div>
 
-        <div id="confirm-modal"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
-            <div
-                class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700 transform transition-all scale-100">
-                <div class="p-6">
-                    <h3 id="confirm-modal-title"
-                        class="text-lg font-medium leading-6 text-white">Are you
-                        sure?</h3>
-                    <div class="mt-2">
-                        <p id="confirm-modal-text"
-                            class="text-sm text-gray-300">This action cannot be
-                            undone.</p>
+        <div class="border-b border-gray-700 mb-6">
+            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                <button id="tab-btn-announce"
+                    class="tab-button active group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                    data-tab="announce">
+                    <i class="fa-solid fa-bullhorn mr-2"></i>
+                    Announcements
+                </button>
+                <button id="tab-btn-users"
+                    class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                    data-tab="users">
+                    <i class="fa-solid fa-users mr-2"></i>
+                    User Management
+                </button>
+                <button id="tab-btn-bans"
+                    class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                    data-tab="bans">
+                    <i class="fa-solid fa-gavel mr-2"></i>
+                    IP Bans
+                </button>
+                <button id="tab-btn-ratelimit"
+                    class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                    data-tab="ratelimit">
+                    <i class="fa-solid fa-stopwatch mr-2"></i>
+                    Rate Limit Logs
+                </button>
+            </nav>
+        </div>
+
+        <div id="tab-content-announce" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-white">Post New Announcement</h2>
+                    <form id="announcement-form" class="space-y-6 bg-gray-700/30 p-6 rounded-xl border border-gray-700">
+                        <div>
+                            <label for="announcement-message"
+                                class="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Message</label>
+                            <textarea id="announcement-message" name="message" rows="4"
+                                class="w-full p-4 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                placeholder="Type your announcement here..."></textarea>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wider">Expiration</label>
+                            <div class="flex items-center space-x-4">
+                                <div class="relative flex-1">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-regular fa-clock text-gray-500"></i>
+                                    </div>
+                                    <input type="number" id="announcement-duration" name="duration" value="24" min="1"
+                                        class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                                </div>
+                                <div class="relative flex-1">
+                                    <select id="announcement-unit" name="unit"
+                                        class="custom-select w-full pl-4 pr-10 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer">
+                                        <option value="hours">Hours</option>
+                                        <option value="days">Days</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">The announcement will automatically disappear after
+                                this time.</p>
+                        </div>
+
+                        <button type="submit" id="submit-announcement"
+                            class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg transform transition hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Post Announcement</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-semibold text-white">Active Announcements</h2>
+                        <button id="refresh-announcements"
+                            class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+
+                    <div id="active-announcements-list" class="space-y-3">
+                        <div class="text-center py-8 text-gray-500 bg-gray-700/30 rounded-xl border border-gray-700">
+                            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Loading active announcements...</p>
+                        </div>
                     </div>
                 </div>
-                <div
-                    class="bg-gray-700/50 px-6 py-4 flex flex-row-reverse space-x-4 space-x-reverse rounded-b-lg">
-                    <button id="confirm-modal-confirm" type="button"
-                        class="inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 hover:bg-red-700 focus:ring-red-500">
-                        Confirm
-                    </button>
-                    <button id="confirm-modal-cancel" type="button"
-                        class="inline-flex justify-center rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Cancel
-                    </button>
-                </div>
             </div>
         </div>
 
-        <div id="role-modal"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
-            <div
-                class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700">
-                <div class="p-6">
-                    <h3
-                        class="text-lg font-medium leading-6 text-white mb-4">Change
-                        User Role</h3>
-                    <p id="role-modal-username"
-                        class="text-sm text-gray-400 mb-4">User: </p>
-
-                    <label for="role-select"
-                        class="block text-sm font-medium text-gray-300 mb-2">Select
-                        New Role</label>
-                    <select id="role-select"
-                        class="custom-select w-full pl-4 pr-10 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer">
-                        <option value="user">User</option>
-                        <option value="moderator">Moderator</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <div
-                    class="bg-gray-700/50 px-6 py-4 flex flex-row-reverse space-x-4 space-x-reverse rounded-b-lg">
-                    <button id="role-modal-save" type="button"
-                        class="inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Save Role
-                    </button>
-                    <button id="role-modal-cancel" type="button"
-                        class="inline-flex justify-center rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Cancel
-                    </button>
-                </div>
+        <div id="tab-content-users" class="tab-content space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold text-white">User Management</h2>
+                <button id="refresh-users"
+                    class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                User</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Role</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Images</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Rate Limit Status</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list-body" class="divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="5" class="py-6 px-4 text-center text-gray-400">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                                Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <div id="image-modal"
-            class="fixed inset-0 z-40 flex items-center justify-center p-4 hidden modal-backdrop">
-            <div
-                class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col border border-gray-700">
-                <div
-                    class="flex justify-between items-center p-4 border-b border-gray-700">
-                    <h3 id="image-modal-title"
-                        class="text-lg font-medium text-white">User Images</h3>
-                    <button id="image-modal-close"
-                        class="text-gray-400 hover:text-white transition">
-                        <i class="fa-solid fa-xmark text-2xl"></i>
-                    </button>
-                </div>
-                <div id="image-modal-body"
-                    class="p-6 overflow-y-auto modal-body-scroll flex-1">
-                    <p id="image-modal-loading"
-                        class="text-center text-gray-300">
-                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading
-                        images...
-                    </p>
-                    <div id="image-modal-gallery"
-                        class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div id="tab-content-bans" class="tab-content space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold text-white">Banned IP Addresses</h2>
+                <button id="refresh-bans"
+                    class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+            <div class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Hashed IP Address</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Banned At (UTC)</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ban-list-body" class="divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="3" class="py-6 px-4 text-center text-gray-400">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                                Loading banned IPs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-content-ratelimit" class="tab-content space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold text-white">Rate Limit Logs</h2>
+                <button id="refresh-ratelimit"
+                    class="text-sm text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
+
+            <div class="mb-4 p-4 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fa-solid fa-triangle-exclamation text-yellow-500 mt-1 mr-3"></i>
+                    <div>
+                        <h3 class="font-semibold text-yellow-300">Rate Limit System</h3>
+                        <p class="text-sm text-yellow-200/80 mt-1">
+                            Users who hit rate limits receive a 2-minute timeout penalty.
+                            Authenticated users' timeouts can be manually cleared below.
+                        </p>
                     </div>
                 </div>
             </div>
+
+            <div class="overflow-x-auto bg-gray-900/50 rounded-lg shadow border border-gray-700">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-800">
+                        <tr>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                User/IP</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Endpoint</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Limit Hit</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Time</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Timeout Applied</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ratelimit-list-body" class="divide-y divide-gray-700">
+                        <tr>
+                            <td colspan="6" class="py-6 px-4 text-center text-gray-400">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+                                Loading rate limit logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <script>
+        <div id="admin-message-box" class="mt-6 text-sm rounded-lg p-4 hidden transition-all duration-300"></div>
+    </div>
+
+    <div id="loading-view" class="text-center pt-20">
+        <i class="fa-solid fa-spinner fa-spin text-5xl text-indigo-400"></i>
+        <p class="mt-4 text-xl text-gray-300">Loading Admin Panel...</p>
+    </div>
+
+    <div id="forbidden-view" class="text-center p-8 bg-gray-800 rounded-lg shadow-xl hidden max-w-lg mx-auto mt-20">
+        <i class="fa-solid fa-shield-halved text-6xl text-red-500 mb-5"></i>
+        <h1 class="text-4xl font-bold text-red-400 mb-3">Access Denied</h1>
+        <p class="text-lg text-gray-300">You do not have permission to view this page.</p>
+        <a href="javascript:window.close();"
+            class="mt-8 inline-block py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition duration-200">Close
+            Window</a>
+    </div>
+
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
+        <div
+            class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700 transform transition-all scale-100">
+            <div class="p-6">
+                <h3 id="confirm-modal-title" class="text-lg font-medium leading-6 text-white">Are you sure?</h3>
+                <div class="mt-2">
+                    <p id="confirm-modal-text" class="text-sm text-gray-300">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="bg-gray-700/50 px-6 py-4 flex flex-row-reverse space-x-4 space-x-reverse rounded-b-lg">
+                <button id="confirm-modal-confirm" type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 bg-red-600 hover:bg-red-700 focus:ring-red-500">
+                    Confirm
+                </button>
+                <button id="confirm-modal-cancel" type="button"
+                    class="inline-flex justify-center rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="role-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-md border border-gray-700">
+            <div class="p-6">
+                <h3 class="text-lg font-medium leading-6 text-white mb-4">Change User Role</h3>
+                <p id="role-modal-username" class="text-sm text-gray-400 mb-4">User: </p>
+
+                <label for="role-select" class="block text-sm font-medium text-gray-300 mb-2">Select New Role</label>
+                <select id="role-select"
+                    class="custom-select w-full pl-4 pr-10 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition cursor-pointer">
+                    <option value="user">User</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="bg-gray-700/50 px-6 py-4 flex flex-row-reverse space-x-4 space-x-reverse rounded-b-lg">
+                <button id="role-modal-save" type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Save Role
+                </button>
+                <button id="role-modal-cancel" type="button"
+                    class="inline-flex justify-center rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="fixed inset-0 z-40 flex items-center justify-center p-4 hidden modal-backdrop">
+        <div class="bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col border border-gray-700">
+            <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                <h3 id="image-modal-title" class="text-lg font-medium text-white">User Images</h3>
+                <button id="image-modal-close" class="text-gray-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
+            <div id="image-modal-body" class="p-6 overflow-y-auto modal-body-scroll flex-1">
+                <p id="image-modal-loading" class="text-center text-gray-300">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading images...
+                </p>
+                <div id="image-modal-gallery" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const API_BASE_URL = 'https://snapvector.pulledtheirlife.support';
 
@@ -406,10 +442,12 @@
 
             const userListBody = document.getElementById('user-list-body');
             const refreshUsersBtn = document.getElementById('refresh-users');
-            
+
             const banListBody = document.getElementById('ban-list-body');
             const refreshBansBtn = document.getElementById('refresh-bans');
 
+            const ratelimitListBody = document.getElementById('ratelimit-list-body');
+            const refreshRatelimitBtn = document.getElementById('refresh-ratelimit');
 
             const confirmModal = document.getElementById('confirm-modal');
             const confirmTitle = document.getElementById('confirm-modal-title');
@@ -436,6 +474,7 @@
 
             let usersFetched = false;
             let bansFetched = false;
+            let rateLimitLogsFetched = false;
 
             async function pingServer() {
                 try {
@@ -468,7 +507,7 @@
 
                         pingServer();
                         await fetchActiveAnnouncements();
-                        await fetchUsers(); 
+                        await fetchUsers();
                         usersFetched = true;
                     } else {
                         showForbidden();
@@ -491,7 +530,6 @@
                     tabButtons.forEach(btn => btn.classList.remove('active', 'text-indigo-400', 'border-indigo-400'));
                     button.classList.add('active', 'text-indigo-400', 'border-indigo-400');
 
-
                     tabContents.forEach(content => {
                         if (content.id === `tab-content-${tab}`) {
                             content.classList.add('active');
@@ -506,6 +544,9 @@
                     } else if (tab === 'bans' && !bansFetched) {
                         await fetchBannedIPs();
                         bansFetched = true;
+                    } else if (tab === 'ratelimit' && !rateLimitLogsFetched) {
+                        await fetchRateLimitLogs();
+                        rateLimitLogsFetched = true;
                     }
                 });
             });
@@ -568,7 +609,6 @@
                 imageModal.classList.add('hidden');
                 imageModalGallery.innerHTML = '';
             });
-
 
             async function fetchActiveAnnouncements() {
                 activeAnnouncementsList.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fa-solid fa-spinner fa-spin mb-2"></i><p>Refreshing...</p></div>';
@@ -690,10 +730,9 @@
                 }
             });
 
-
             async function fetchUsers() {
                 userListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading users...</td></tr>`;
-                
+
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/users`, { credentials: 'include' });
                     if (!response.ok) throw new Error('Failed to fetch users');
@@ -728,6 +767,22 @@
                             roleColor = 'text-gray-400 italic';
                         }
 
+                        let rateLimitBadge = '';
+                        if (user.is_rate_limited && user.rate_limit_timeout_until) {
+                            const timeoutDate = new Date(user.rate_limit_timeout_until);
+                            const now = new Date();
+                            const diffMinutes = Math.max(0, Math.round((timeoutDate - now) / (1000 * 60)));
+
+                            rateLimitBadge = `
+                                <div class="flex items-center">
+                                    <span class="badge badge-timeout mr-2">TIMEOUT</span>
+                                    <span class="text-xs text-red-300">${diffMinutes}m remaining</span>
+                                </div>
+                            `;
+                        } else {
+                            rateLimitBadge = '<span class="text-xs text-green-400">Active</span>';
+                        }
+
                         const canEditRole = (currentUserRole === 'owner') && (rawRole !== 'owner');
                         const editRoleBtnHtml = canEditRole ? `
                             <button class="edit-role-btn bg-indigo-900/30 text-indigo-400 hover:text-white hover:bg-indigo-600 p-2 rounded-lg transition" data-id="${user.id}" data-username="${user.username}" data-role="${rawRole}" title="Change Role">
@@ -746,18 +801,26 @@
                             </button>
                         ` : '';
 
+                        let clearTimeoutBtnHtml = '';
+                        if (user.is_rate_limited && (currentUserRole === 'owner' || currentUserRole === 'admin')) {
+                            clearTimeoutBtnHtml = `
+                                <button class="clear-timeout-btn bg-yellow-900/30 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-900/60 p-2 rounded-lg transition" data-id="${user.id}" data-username="${user.username}" title="Clear Rate Limit Timeout">
+                                    <i class="fa-solid fa-clock"></i>
+                                </button>
+                            `;
+                        }
+
                         tr.innerHTML = `
                             <td class="py-4 px-4 text-sm font-medium text-white">${user.username}</td>
                             <td class="py-4 px-4 text-sm ${roleColor}">${displayRole}</td>
                             <td class="py-4 px-4 text-sm text-gray-300">${user.image_count}</td>
-                            <td class="py-4 px-4 text-sm text-gray-400 font-mono" title="${user.registration_ip_hash || 'N/A'}">
-                                ${user.registration_ip_hash ? user.registration_ip_hash.substring(0, 12) + '...' : 'N/A'}
-                            </td>
+                            <td class="py-4 px-4 text-sm">${rateLimitBadge}</td>
                             <td class="py-4 px-4 text-sm font-medium space-x-2 whitespace-nowrap">
                                 <button class="view-images-btn bg-gray-700 text-gray-300 hover:text-white hover:bg-gray-600 p-2 rounded-lg transition" data-id="${user.id}" data-username="${user.username}" title="View Images">
                                     <i class="fa-solid fa-images"></i>
                                 </button>
                                 ${editRoleBtnHtml}
+                                ${clearTimeoutBtnHtml}
                                 ${deleteBtnHtml}
                             </td>
                         `;
@@ -771,9 +834,8 @@
                     userListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-red-400">Failed to load users.</td></tr>`;
                 }
             }
-            
-            refreshUsersBtn.addEventListener('click', fetchUsers);
 
+            refreshUsersBtn.addEventListener('click', fetchUsers);
 
             function addUserEventListeners() {
                 document.querySelectorAll('.view-images-btn').forEach(btn => {
@@ -798,6 +860,12 @@
                     btn.addEventListener('click', (e) => {
                         const { id, username, role } = e.currentTarget.dataset;
                         openRoleModal(id, username, role);
+                    });
+                });
+                document.querySelectorAll('.clear-timeout-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const { id, username } = e.currentTarget.dataset;
+                        handleClearRateLimitTimeout(id, username);
                     });
                 });
             }
@@ -851,7 +919,6 @@
                     roleModalSave.textContent = originalBtnText;
                 }
             });
-
 
             async function handleViewImages(userId, username) {
                 imageModalTitle.textContent = `Images for ${username}`;
@@ -942,6 +1009,32 @@
                 }
             }
 
+            async function handleClearRateLimitTimeout(userId, username) {
+                const confirmed = await showConfirmModal(
+                    `Clear Rate Limit Timeout for ${username}?`,
+                    "This will immediately remove the rate limit timeout and allow the user to make requests again.",
+                    'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
+                );
+
+                if (confirmed) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/admin/clear_rate_limit_timeout/${userId}`, {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            showAdminMessage(data.message, 'success');
+                            await fetchUsers();
+                            await fetchRateLimitLogs();
+                        } else {
+                            showAdminMessage(data.error, 'error');
+                        }
+                    } catch (error) {
+                        showAdminMessage('A network error occurred.', 'error');
+                    }
+                }
+            }
 
             refreshBansBtn.addEventListener('click', fetchBannedIPs);
 
@@ -961,7 +1054,7 @@
                     ips.forEach(ip => {
                         const tr = document.createElement('tr');
                         tr.className = "hover:bg-gray-800 transition duration-150 border-b border-gray-700/50 last:border-none";
-                        
+
                         const bannedDate = new Date(ip.banned_at).toLocaleString();
 
                         tr.innerHTML = `
@@ -1017,11 +1110,74 @@
                 }
             }
 
+            async function fetchRateLimitLogs() {
+                ratelimitListBody.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>`;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/rate_limit_logs`, { credentials: 'include' });
+                    if (!response.ok) throw new Error('Failed to fetch rate limit logs');
+                    const logs = await response.json();
+
+                    ratelimitListBody.innerHTML = '';
+                    if (logs.length === 0) {
+                        ratelimitListBody.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-gray-400">No rate limit logs found.</td></tr>`;
+                        return;
+                    }
+
+                    logs.forEach(log => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-800 transition duration-150 border-b border-gray-700/50 last:border-none";
+
+                        const userDisplay = log.username ?
+                            `<div>${log.username}</div><div class="text-xs text-gray-400">${log.ip_address}</div>` :
+                            `<div class="text-gray-400">Unauthenticated</div><div class="text-xs">${log.ip_address}</div>`;
+
+                        const endpointShort = log.endpoint.length > 30 ?
+                            log.endpoint.substring(0, 27) + '...' : log.endpoint;
+
+                        const timeoutBadge = log.timeout_applied ?
+                            `<span class="badge badge-timeout">${log.timeout_minutes} min</span>` :
+                            '<span class="text-xs text-gray-400">No</span>';
+
+                        tr.innerHTML = `
+                            <td class="py-4 px-4 text-sm">${userDisplay}</td>
+                            <td class="py-4 px-4 text-sm text-gray-300" title="${log.endpoint}">${endpointShort}</td>
+                            <td class="py-4 px-4 text-sm text-gray-300">${log.limit_hit}</td>
+                            <td class="py-4 px-4 text-sm text-gray-400">
+                                <div>${log.time_ago}</div>
+                                <div class="text-xs">${new Date(log.occurred_at).toLocaleTimeString()}</div>
+                            </td>
+                            <td class="py-4 px-4 text-sm">${timeoutBadge}</td>
+                            <td class="py-4 px-4 text-sm">
+                                ${log.user_id && (currentUserRole === 'owner' || currentUserRole === 'admin') ?
+                                `<button class="clear-log-timeout-btn bg-yellow-900/30 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-900/60 p-2 rounded-lg transition" data-userid="${log.user_id}" data-username="${log.username || 'User'}" title="Clear User Timeout">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </button>` :
+                                '<span class="text-gray-500">-</span>'}
+                            </td>
+                        `;
+                        ratelimitListBody.appendChild(tr);
+                    });
+
+                    document.querySelectorAll('.clear-log-timeout-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const userId = e.currentTarget.dataset.userid;
+                            const username = e.currentTarget.dataset.username;
+                            handleClearRateLimitTimeout(userId, username);
+                        });
+                    });
+
+                } catch (error) {
+                    console.error('Fetch rate limit logs error:', error);
+                    ratelimitListBody.innerHTML = `<tr><td colspan="6" class="py-6 px-4 text-center text-red-400">Failed to load rate limit logs.</td></tr>`;
+                }
+            }
+
+            refreshRatelimitBtn.addEventListener('click', fetchRateLimitLogs);
 
             checkAdminAuth();
         });
     </script>
-    </body>
+</body>
 
 </html>
-
