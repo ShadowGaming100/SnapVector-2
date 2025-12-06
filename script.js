@@ -235,8 +235,8 @@
             if (error.message.includes('timed out')) {
                 showMessage('Could not load images: The server took too long to respond.', 'error');
             } else if (error.message === 'Unauthorized') {
-                 // Do nothing, just stay on dashboard
-                 console.log("Session not fully ready yet, or images restricted.");
+                // Do nothing, just stay on dashboard
+                console.log("Session not fully ready yet, or images restricted.");
             } else {
                 showMessage('Could not load your images.', 'error');
             }
@@ -259,7 +259,7 @@
                         <i class="fa-solid fa-bullhorn fa-fade text-xl"></i>
                         <div>
                             <p class="font-bold">Announcement</p>
-                            <p class="text-sm">${latestAnnouncement.message}</p>
+                            <p class="text-sm whitespace-pre-wrap">${latestAnnouncement.message}</p>
                             <p class="text-xs text-indigo-400 mt-1">${messageDate}</p>
                         </div>
                     </div>`;
@@ -284,8 +284,8 @@
             currentUser = { ...userData };
 
             showView('dashboard');
-            
-            fetchImages(); 
+
+            fetchImages();
 
             let roleBadge = '';
             if (currentUser.role === 'owner') roleBadge = '👑 Owner';
@@ -926,7 +926,7 @@
 
     checkAuthStatus();
 
-// Status Indicator System
+    // Status Indicator System
     const statusIndicator = document.getElementById('status-indicator');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
@@ -943,13 +943,13 @@
             const response = await fetchWithTimeout(`${API_BASE_URL}/status`, {
                 credentials: 'include'
             }, 5000);
-            
+
             const currentTime = new Date().toLocaleTimeString();
             lastCheckTime.textContent = currentTime;
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 // Check if API is operational - handle multiple response formats
                 if (response.status === 200 || data.status_code === 200 || data.status === 'operational' || data.api === 'operational') {
                     statusDot.className = 'w-2 h-2 rounded-full bg-green-500';
@@ -967,10 +967,10 @@
             // System issues detected
             statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
             statusText.textContent = 'Service Issues Detected';
-            
+
             apiStatus.textContent = 'Unavailable';
             apiStatus.className = 'text-xs font-semibold text-red-400';
-            
+
             statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
             statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
             statusMessage.classList.remove('hidden');

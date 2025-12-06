@@ -636,7 +636,7 @@
 
                         el.innerHTML = `
                             <div class="flex-1 pr-4">
-                                <p class="text-white font-medium mb-1">${announcement.message}</p>
+                                <p class="text-white font-medium mb-1 whitespace-pre-wrap">${announcement.message}</p>
                                 <div class="text-xs text-gray-400 flex flex-wrap gap-3">
                                     <span><i class="fa-regular fa-calendar mr-1"></i> Posted: ${created}</span>
                                     <span class="${announcement.expires_at ? 'text-yellow-500' : ''}"><i class="fa-solid fa-hourglass-end mr-1"></i> Expires: ${expires}</span>
