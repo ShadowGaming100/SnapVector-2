@@ -41,11 +41,10 @@
     const loadingIndicator = document.getElementById('loading-indicator');
     const dropZone = document.getElementById('drop-zone');
     const previewZone = document.getElementById('preview-zone');
-    const filePreview = document.getElementById('file-preview');
+    const previewContainer = document.getElementById('preview-media-container');
     const clearPreviewButton = document.getElementById('clear-preview-button');
 
     const detailsTitle = document.getElementById('details-title');
-    const imagePreview = document.getElementById('image-preview');
     const shareLinkInput = document.getElementById('share-link');
     const copyButton = document.getElementById('copy-button');
     const backToUploaderButton = document.getElementById('back-to-uploader-button');
@@ -165,6 +164,7 @@
     function showDashboardView() {
         showView('dashboard');
         fetchImages();
+        clearPreview();
     }
 
     function showAccountView() {
@@ -185,6 +185,7 @@
             newUsernameInput.placeholder = currentUser.username;
             fetchSessions();
         }
+        clearPreview();
     }
 
 
@@ -214,18 +215,27 @@
                     const item = document.createElement('div');
                     item.className = `relative group rounded-lg overflow-hidden border ${expiryClass} bg-gray-700 shadow-xl cursor-pointer gallery-image`;
                     item.setAttribute('data-image-id', image.id);
-                    const img = document.createElement('img');
-                    img.src = image.url;
-                    img.alt = `Uploaded on ${new Date(image.upload_date).toLocaleDateString()}`;
-                    img.className = 'w-full h-32 object-cover';
+
+                    const fileExtension = image.filename.split('.').pop().toLowerCase();
+                    const isVideoFile = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'flv', 'quicktime'].includes(fileExtension);
+
+                    let mediaHtml;
+                    if (isVideoFile) {
+                        mediaHtml = `<video src="${image.url}" class="w-full h-32 object-cover" muted loop autoplay></video>`;
+                    } else {
+                        mediaHtml = `<img src="${image.url}" alt="Uploaded on ${new Date(image.upload_date).toLocaleDateString()}" class="w-full h-32 object-cover">`;
+                    }
+
                     const overlay = document.createElement('div');
                     overlay.className = 'absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300';
                     const viewButton = document.createElement('span');
                     viewButton.textContent = 'View Details';
                     viewButton.className = 'text-white text-sm font-bold p-2 bg-indigo-600 rounded-lg';
                     overlay.appendChild(viewButton);
-                    item.appendChild(img);
+
+                    item.innerHTML = mediaHtml;
                     item.appendChild(overlay);
+
                     imageGallery.appendChild(item);
                     item.addEventListener('click', () => showDetailsView(image.id));
                 });
@@ -235,7 +245,6 @@
             if (error.message.includes('timed out')) {
                 showMessage('Could not load images: The server took too long to respond.', 'error');
             } else if (error.message === 'Unauthorized') {
-                // Do nothing, just stay on dashboard
                 console.log("Session not fully ready yet, or images restricted.");
             } else {
                 showMessage('Could not load your images.', 'error');
@@ -484,35 +493,105 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_MB = 50;
+    const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi', 'video/mkv', 'video/flv', 'video/quicktime'];
+
+    function isImage(fileType) {
+        return ALLOWED_IMAGE_TYPES.includes(fileType);
+    }
+
+    function isVideo(fileType) {
+        return ALLOWED_VIDEO_TYPES.includes(fileType) || fileType.startsWith('video/');
+    }
+
+    function clearPreview() {
+        fileInput.value = '';
+
+        const mediaElement = previewContainer.querySelector('img, video');
+        if (mediaElement) {
+            mediaElement.remove();
+        }
+
+        previewZone.classList.add('hidden');
+        dropZone.classList.remove('hidden');
+
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    if (clearPreviewButton) {
+        clearPreviewButton.addEventListener('click', clearPreview);
+    }
+
     function handleFileSelection(file) {
         if (!file) return;
-        const maxSize = 10 * 1024 * 1024;
+
+        const isFileTypeImage = isImage(file.type);
+        const isFileTypeVideo = isVideo(file.type);
+
+        let maxSize = 0;
+        let fileTypeLabel = '';
+
+        if (isFileTypeImage) {
+            maxSize = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+            fileTypeLabel = 'Image';
+        } else if (isFileTypeVideo) {
+            maxSize = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+            fileTypeLabel = 'Video';
+        } else {
+            const imageExts = ALLOWED_IMAGE_TYPES.map(t => t.split('/').pop().toUpperCase()).join(', ');
+            const videoExts = ALLOWED_VIDEO_TYPES.map(t => t.split('/').pop().toUpperCase()).join(', ');
+            showMessage(`Invalid file type. Allowed: ${imageExts} or ${videoExts}`, 'error');
+            clearPreview();
+            return;
+        }
+
         if (file.size > maxSize) {
             const formattedSize = formatFileSize(file.size);
-            showMessage(`File size exceeds the 10MB limit. Your file is ${formattedSize}.`, 'error');
-            fileInput.value = '';
-            submitButton.disabled = true;
-            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            const formattedLimit = formatFileSize(maxSize);
+            showMessage(`File size exceeds the ${formattedLimit} limit for ${fileTypeLabel}. Your file is ${formattedSize}.`, 'error');
+            clearPreview();
             return;
         }
-        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(file.type)) {
-            showMessage('Invalid file type. Only PNG, JPG, JPEG, GIF, and WEBP are allowed.', 'error');
-            fileInput.value = '';
-            submitButton.disabled = true;
-            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-            return;
-        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
-            filePreview.src = e.target.result;
-            dropZone.classList.add('hidden');
-            previewZone.classList.remove('hidden');
-            submitButton.disabled = false;
-            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            const existingMedia = previewContainer.querySelector('img, video');
+            if (existingMedia) existingMedia.remove();
+
+            let mediaElement;
+
+            if (isFileTypeImage) {
+                mediaElement = document.createElement('img');
+                mediaElement.src = e.target.result;
+            } else if (isFileTypeVideo) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = e.target.result;
+                mediaElement.controls = true;
+                mediaElement.muted = true;
+                mediaElement.autoplay = false;
+                mediaElement.loop = true;
+            }
+
+            if (mediaElement) {
+                mediaElement.className = 'w-full max-h-64 object-contain rounded-lg border border-gray-700 bg-gray-900 p-2';
+
+                previewContainer.prepend(mediaElement);
+
+                dropZone.classList.add('hidden');
+                previewZone.classList.remove('hidden');
+
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                showMessage('Error generating preview.', 'error');
+            }
         };
         reader.readAsDataURL(file);
     }
+
 
     fileInput.addEventListener('change', (e) => {
         handleFileSelection(e.target.files[0]);
@@ -541,19 +620,10 @@
         }
     });
 
-    clearPreviewButton.addEventListener('click', () => {
-        fileInput.value = '';
-        filePreview.src = '';
-        previewZone.classList.add('hidden');
-        dropZone.classList.remove('hidden');
-        submitButton.disabled = true;
-        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-    });
-
-
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const file = fileInput.files[0];
+
         if (!file) {
             showMessage('Please select a file to upload.', 'error');
             return;
@@ -561,8 +631,10 @@
         submitButton.disabled = true;
         document.getElementById('button-text').textContent = 'Uploading...';
         loadingIndicator.classList.remove('hidden');
+
         const formData = new FormData();
         formData.append('file', file);
+
         let response;
         try {
             response = await fetchWithTimeout(`${API_BASE_URL}/upload`, {
@@ -570,24 +642,20 @@
                 body: formData,
                 credentials: 'include'
             }, 120000);
+
             const data = await response.json();
             if (data.success) {
-                showMessage('Image uploaded successfully!', 'success');
-                clearPreviewButton.click();
+                showMessage('File uploaded successfully!', 'success');
+
+                clearPreview();
+
                 showDetailsView(data.details_id);
             } else {
                 showMessage(data.error || 'An unknown error occurred.', 'error');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            if (error.message.includes('timed out')) {
-                showMessage('Upload request timed out. This can happen with large files or slow connections.', 'error');
-            } else if (response && response.status === 429) {
-                showMessage('You are uploading too fast. Please try again in a minute.', 'error');
-            }
-            else {
-                showMessage('Network or server error during upload.', 'error');
-            }
+            showMessage('Upload failed.', 'error');
         } finally {
             document.getElementById('button-text').textContent = 'Upload Image';
             loadingIndicator.classList.add('hidden');
@@ -623,8 +691,41 @@
                 showView('details');
                 const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
                 detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
-                imagePreview.src = data.url;
                 shareLinkInput.value = data.url;
+
+                const oldMediaElement = document.getElementById('image-preview');
+                const parent = oldMediaElement.parentElement;
+                const fileUrl = data.url;
+                const fileExtension = data.filename.split('.').pop().toLowerCase();
+                const isVideoFile = ALLOWED_VIDEO_TYPES.some(type => type.endsWith(fileExtension));
+
+                let newMediaElement;
+
+                if (isVideoFile) {
+                    if (oldMediaElement.tagName.toLowerCase() !== 'video') {
+                        newMediaElement = document.createElement('video');
+                        newMediaElement.id = 'image-preview';
+                        newMediaElement.controls = true;
+                        newMediaElement.autoplay = false;
+                        newMediaElement.muted = false;
+                        newMediaElement.loop = false;
+                        newMediaElement.src = fileUrl;
+                        newMediaElement.className = oldMediaElement.className;
+                        parent.replaceChild(newMediaElement, oldMediaElement);
+                    } else {
+                        oldMediaElement.src = fileUrl;
+                    }
+                } else {
+                    if (oldMediaElement.tagName.toLowerCase() !== 'img') {
+                        newMediaElement = document.createElement('img');
+                        newMediaElement.id = 'image-preview';
+                        newMediaElement.alt = 'Image Preview';
+                        newMediaElement.className = oldMediaElement.className;
+                        parent.replaceChild(newMediaElement, oldMediaElement);
+                    } else {
+                        oldMediaElement.src = fileUrl;
+                    }
+                }
 
                 if (expiryDate) {
                     const now = new Date();
@@ -634,13 +735,13 @@
                         year: 'numeric', month: 'long', day: 'numeric'
                     });
                     if (diffDays <= 3) {
-                        expirationText.textContent = `PURGE ALERT! This image will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationText.textContent = `PURGE ALERT! This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
                         expirationInfoBox.className = 'bg-red-900/50 border-2 border-red-500 rounded-lg p-3';
                         expirationText.parentElement.classList.remove('text-blue-300');
                         expirationText.parentElement.classList.add('text-red-300');
                         expirationText.parentElement.querySelector('i').className = 'fa-solid fa-triangle-exclamation';
                     } else {
-                        expirationText.textContent = `This image will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationText.textContent = `This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
                         expirationInfoBox.className = 'bg-blue-900/50 border-2 border-blue-500 rounded-lg p-3';
                         expirationText.parentElement.classList.remove('text-red-300');
                         expirationText.parentElement.classList.add('text-blue-300');
@@ -666,9 +767,9 @@
         } catch (error) {
             console.error('Details fetch error:', error);
             if (error.message.includes('timed out') || error.message.includes('Failed to fetch')) {
-                showMessage('You must be logged in to view image details.', 'error');
+                showMessage('You must be logged in to view file details.', 'error');
             } else {
-                showMessage('Could not load image details.', 'error');
+                showMessage('Could not load file details.', 'error');
             }
             showDashboardView();
         }
@@ -727,7 +828,7 @@
 
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
-        if (!showConfirm(`Are you sure you want to delete this image? This cannot be undone.`)) {
+        if (!showConfirm(`Are you sure you want to delete this file? This cannot be undone.`)) {
             return;
         }
         try {
@@ -737,7 +838,7 @@
             }, 8000);
             const data = await response.json();
             if (data.success) {
-                showMessage('Image deleted successfully.', 'success');
+                showMessage('File deleted successfully.', 'success');
                 showDashboardView();
             } else {
                 showMessage(data.error, 'error');
@@ -827,9 +928,9 @@
         e.preventDefault();
         const password = deleteConfirmPasswordInput.value;
 
-        let confirmMessage = "Are you sure you want to delete your account? This is permanent and all your images will be lost.";
+        let confirmMessage = "Are you sure you want to delete your account? This is permanent and all your files will be lost.";
         if (currentUser.is_guest) {
-            confirmMessage = "Are you sure you want to delete this guest account? All your images will be lost.";
+            confirmMessage = "Are you sure you want to delete this guest account? All your files will be lost.";
         } else if (!password) {
             showMessage("Please enter your password to confirm deletion.", "error");
             return;
@@ -926,7 +1027,6 @@
 
     checkAuthStatus();
 
-    // Status Indicator System
     const statusIndicator = document.getElementById('status-indicator');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
@@ -950,7 +1050,6 @@
             if (response.ok) {
                 const data = await response.json();
 
-                // Check if API is operational - handle multiple response formats
                 if (response.status === 200 || data.status_code === 200 || data.status === 'operational' || data.api === 'operational') {
                     statusDot.className = 'w-2 h-2 rounded-full bg-green-500';
                     statusText.textContent = 'All Systems Operational';
@@ -964,7 +1063,6 @@
                 throw new Error('Status check failed');
             }
         } catch (error) {
-            // System issues detected
             statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
             statusText.textContent = 'Service Issues Detected';
 
@@ -995,10 +1093,8 @@
         }
     });
 
-    // Check status on page load
     checkSystemStatus();
 
-    // Check status every 60 seconds
     statusCheckInterval = setInterval(checkSystemStatus, 60000);
 
     checkAuthStatus();

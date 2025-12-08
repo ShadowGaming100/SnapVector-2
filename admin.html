@@ -105,7 +105,7 @@
         </div>
 
         <div class="border-b border-gray-700 mb-6">
-            <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+            <nav class="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
                 <button id="tab-btn-announce"
                     class="tab-button active group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
                     data-tab="announce">
@@ -129,6 +129,12 @@
                     data-tab="ratelimit">
                     <i class="fa-solid fa-stopwatch mr-2"></i>
                     Rate Limit Logs
+                </button>
+                <button id="tab-btn-purge"
+                    class="tab-button group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm text-gray-400 hover:text-indigo-400 hover:border-indigo-400 border-transparent"
+                    data-tab="purge">
+                    <i class="fa-solid fa-biohazard mr-2"></i>
+                    Manual Purge
                 </button>
             </nav>
         </div>
@@ -257,6 +263,12 @@
                                 Hashed IP Address</th>
                             <th scope="col"
                                 class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Username (Snapshot)</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                Reason</th>
+                            <th scope="col"
+                                class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                                 Banned At (UTC)</th>
                             <th scope="col"
                                 class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
@@ -265,7 +277,7 @@
                     </thead>
                     <tbody id="ban-list-body" class="divide-y divide-gray-700">
                         <tr>
-                            <td colspan="3" class="py-6 px-4 text-center text-gray-400">
+                            <td colspan="5" class="py-6 px-4 text-center text-gray-400">
                                 <i class="fa-solid fa-spinner fa-spin mr-2"></i>
                                 Loading banned IPs...
                             </td>
@@ -310,10 +322,10 @@
                                 Endpoint</th>
                             <th scope="col"
                                 class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                Limit Hit</th>
+                                Total Hits</th>
                             <th scope="col"
                                 class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
-                                Time</th>
+                                Last Hit</th>
                             <th scope="col"
                                 class="py-3.5 px-4 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
                                 Timeout Applied</th>
@@ -331,6 +343,56 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="tab-content-purge" class="tab-content space-y-6">
+            <div class="p-6 bg-red-900/20 border border-red-800 rounded-xl space-y-6">
+                <h2 class="text-2xl font-bold text-red-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Danger
+                    Zone: Manual Purge</h2>
+                <p class="text-gray-300">These actions are destructive and cannot be undone. Please proceed with extreme
+                    caution.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">Purge Inactive Users</h3>
+                            <i class="fa-solid fa-user-clock text-gray-400 text-xl"></i>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-6">Deletes all users (non-admin) who haven't uploaded an
+                            image in the last 3 months, or ghost accounts created >3 months ago with no uploads.</p>
+                        <button id="btn-purge-inactive"
+                            class="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded transition">
+                            Purge Inactive
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">Purge All Images</h3>
+                            <i class="fa-solid fa-images text-gray-400 text-xl"></i>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-6">Deletes EVERY image from the server database and storage,
+                            regardless of expiration date. Users remain.</p>
+                        <button id="btn-purge-images"
+                            class="w-full py-2 px-4 bg-orange-700 hover:bg-orange-600 text-white font-semibold rounded transition">
+                            Purge All Images
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-lg border border-red-900 shadow-[0_0_15px_rgba(220,38,38,0.2)]">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-red-500">Nuclear Purge</h3>
+                            <i class="fa-solid fa-radiation text-red-500 text-xl"></i>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-6">Deletes EVERYTHING: All images, all logs, announcements,
+                            and ALL users except Owner and Admins. Banned IPs are preserved.</p>
+                        <button id="btn-purge-nuclear"
+                            class="w-full py-2 px-4 bg-red-700 hover:bg-red-600 text-white font-semibold rounded transition">
+                            NUCLEAR PURGE
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -358,6 +420,9 @@
                 <h3 id="confirm-modal-title" class="text-lg font-medium leading-6 text-white">Are you sure?</h3>
                 <div class="mt-2">
                     <p id="confirm-modal-text" class="text-sm text-gray-300">This action cannot be undone.</p>
+                    <input type="text" id="confirm-modal-input"
+                        class="hidden mt-3 w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                        placeholder="Reason for action...">
                 </div>
             </div>
             <div class="bg-gray-700/50 px-6 py-4 flex flex-row-reverse space-x-4 space-x-reverse rounded-b-lg">
@@ -452,6 +517,7 @@
             const confirmModal = document.getElementById('confirm-modal');
             const confirmTitle = document.getElementById('confirm-modal-title');
             const confirmText = document.getElementById('confirm-modal-text');
+            const confirmInput = document.getElementById('confirm-modal-input');
             const confirmBtn = document.getElementById('confirm-modal-confirm');
             const cancelBtn = document.getElementById('confirm-modal-cancel');
 
@@ -551,17 +617,6 @@
                 });
             });
 
-            async function handleApiCall(apiCall) {
-                try {
-                    return await apiCall();
-                } catch (error) {
-                    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                        showAdminMessage('Network error: Cannot connect to server. Please check your connection and try again.', 'error');
-                    }
-                    throw error;
-                }
-            }
-
             function showAdminMessage(message, type = 'info') {
                 let typeClasses = '';
                 switch (type) {
@@ -585,10 +640,19 @@
                 }, 5000);
             }
 
-            function showConfirmModal(title, text, confirmClass = 'bg-red-600 hover:bg-red-700 focus:ring-red-500') {
+            function showConfirmModal(title, text, inputPlaceholder = null, confirmClass = 'bg-red-600 hover:bg-red-700 focus:ring-red-500') {
                 confirmTitle.textContent = title;
                 confirmText.textContent = text;
                 confirmBtn.className = `inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${confirmClass}`;
+
+                if (inputPlaceholder) {
+                    confirmInput.placeholder = inputPlaceholder;
+                    confirmInput.value = '';
+                    confirmInput.classList.remove('hidden');
+                } else {
+                    confirmInput.classList.add('hidden');
+                }
+
                 confirmModal.classList.remove('hidden');
 
                 return new Promise((resolve) => {
@@ -602,7 +666,8 @@
             });
             confirmBtn.addEventListener('click', () => {
                 confirmModal.classList.add('hidden');
-                if (confirmResolve) confirmResolve(true);
+                // Return input value if present, else true
+                if (confirmResolve) confirmResolve(confirmInput.classList.contains('hidden') ? true : confirmInput.value);
             });
 
             imageModalClose.addEventListener('click', () => {
@@ -652,7 +717,7 @@
                     document.querySelectorAll('.delete-announcement-btn').forEach(btn => {
                         btn.addEventListener('click', async () => {
                             const id = btn.dataset.id;
-                            const confirmed = await showConfirmModal('Delete Announcement?', 'This will remove the announcement immediately for all users.', 'bg-red-600 hover:bg-red-700 focus:ring-red-500');
+                            const confirmed = await showConfirmModal('Delete Announcement?', 'This will remove the announcement immediately for all users.', null, 'bg-red-600 hover:bg-red-700 focus:ring-red-500');
                             if (confirmed) {
                                 deleteAnnouncement(id);
                             }
@@ -769,16 +834,13 @@
 
                         let rateLimitBadge = '';
                         if (user.is_rate_limited && user.rate_limit_timeout_until) {
-                            const timeoutDate = new Date(user.rate_limit_timeout_until);
-                            const now = new Date();
-                            const diffMinutes = Math.max(0, Math.round((timeoutDate - now) / (1000 * 60)));
-
                             rateLimitBadge = `
                                 <div class="flex items-center">
                                     <span class="badge badge-timeout mr-2">TIMEOUT</span>
-                                    <span class="text-xs text-red-300">${diffMinutes}m remaining</span>
                                 </div>
                             `;
+                        } else if (user.is_rate_limited) {
+                            rateLimitBadge = '<span class="badge badge-timeout">TIMEOUT</span>';
                         } else {
                             rateLimitBadge = '<span class="text-xs text-green-400">Active</span>';
                         }
@@ -939,11 +1001,28 @@
                             imageModalGallery.innerHTML += `
                                 <div class="group relative">
                                     <img src="${img.url}" alt="${img.filename}" class="w-full h-32 object-cover rounded-lg border border-gray-600">
-                                    <a href="${img.url}" target="_blank" rel="noopener noreferrer" class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <i class="fa-solid fa-up-right-from-square text-white text-2xl"></i>
-                                    </a>
+                                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity space-x-2">
+                                        <a href="${img.url}" target="_blank" rel="noopener noreferrer" class="text-white hover:text-indigo-400">
+                                            <i class="fa-solid fa-up-right-from-square text-2xl"></i>
+                                        </a>
+                                        <button class="delete-img-btn text-red-500 hover:text-red-400" data-id="${img.id}">
+                                            <i class="fa-solid fa-trash text-2xl"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             `;
+                        });
+
+                        document.querySelectorAll('.delete-img-btn').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                const imgId = e.currentTarget.dataset.id;
+                                if (await showConfirmModal("Delete Image?", "Permanently delete this image?", null, "bg-red-600")) {
+                                    const delRes = await fetch(`${API_BASE_URL}/admin/image/${imgId}`, { method: 'DELETE', credentials: 'include' });
+                                    if ((await delRes.json()).success) {
+                                        e.currentTarget.closest('.group').remove();
+                                    }
+                                }
+                            });
                         });
                     }
                 } catch (error) {
@@ -959,6 +1038,7 @@
                 const confirmed = await showConfirmModal(
                     `Delete User: ${username}?`,
                     "This will permanently delete the user and all their uploaded images. This action cannot be undone.",
+                    null,
                     'bg-red-600 hover:bg-red-700 focus:ring-red-500'
                 );
 
@@ -982,18 +1062,22 @@
             }
 
             async function handleBanUser(userId, username) {
-                const confirmed = await showConfirmModal(
-                    `Ban User & IP: ${username}?`,
-                    "This will delete the user, all their images, AND ban all their known IP addresses (registration, last seen, sessions) from accessing the site. This is not easily reversible.",
+                const reason = await showConfirmModal(
+                    `Ban User: ${username}?`,
+                    "This will delete the user, all their images, AND ban all their known IP addresses. Enter a reason below (optional).",
+                    "Reason for ban...",
                     'bg-red-800 hover:bg-red-700 focus:ring-red-700'
                 );
 
-                if (confirmed) {
+                if (reason) {
                     try {
                         const response = await fetch(`${API_BASE_URL}/admin/ban`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ user_id: userId }),
+                            body: JSON.stringify({
+                                user_id: userId,
+                                reason: reason === true ? "Violation" : reason
+                            }),
                             credentials: 'include'
                         });
                         const data = await response.json();
@@ -1013,6 +1097,7 @@
                 const confirmed = await showConfirmModal(
                     `Clear Rate Limit Timeout for ${username}?`,
                     "This will immediately remove the rate limit timeout and allow the user to make requests again.",
+                    null,
                     'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500'
                 );
 
@@ -1039,7 +1124,7 @@
             refreshBansBtn.addEventListener('click', fetchBannedIPs);
 
             async function fetchBannedIPs() {
-                banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>`;
+                banListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>`;
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/banned_ips`, { credentials: 'include' });
                     if (!response.ok) throw new Error('Failed to fetch banned IPs');
@@ -1047,7 +1132,7 @@
 
                     banListBody.innerHTML = '';
                     if (ips.length === 0) {
-                        banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-gray-400">No IP addresses are currently banned.</td></tr>`;
+                        banListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-gray-400">No IP addresses are currently banned.</td></tr>`;
                         return;
                     }
 
@@ -1058,7 +1143,9 @@
                         const bannedDate = new Date(ip.banned_at).toLocaleString();
 
                         tr.innerHTML = `
-                            <td class="py-4 px-4 text-sm font-medium text-white font-mono">${ip.hashed_ip}</td>
+                            <td class="py-4 px-4 text-sm font-medium text-white font-mono">${ip.hashed_ip.substring(0, 15)}...</td>
+                            <td class="py-4 px-4 text-sm text-gray-300">${ip.username || '-'}</td>
+                            <td class="py-4 px-4 text-sm text-gray-300 italic">${ip.reason || 'Violation'}</td>
                             <td class="py-4 px-4 text-sm text-gray-300">${bannedDate}</td>
                             <td class="py-4 px-4 text-sm font-medium">
                                 <button class="unban-ip-btn bg-green-900/30 text-green-400 hover:text-white hover:bg-green-600 p-2 rounded-lg transition" data-hash="${ip.hashed_ip}" title="Unban this IP">
@@ -1078,14 +1165,15 @@
 
                 } catch (error) {
                     console.error('Fetch bans error:', error);
-                    banListBody.innerHTML = `<tr><td colspan="3" class="py-6 px-4 text-center text-red-400">Failed to load banned IPs.</td></tr>`;
+                    banListBody.innerHTML = `<tr><td colspan="5" class="py-6 px-4 text-center text-red-400">Failed to load banned IPs.</td></tr>`;
                 }
             }
 
             async function handleUnbanIP(hashedIp) {
                 const confirmed = await showConfirmModal(
-                    `Unban IP: ${hashedIp.substring(0, 12)}...?`,
+                    `Unban IP?`,
                     "This will allow any user from this IP address to access the site again. Are you sure?",
+                    null,
                     'bg-green-600 hover:bg-green-700 focus:ring-green-500'
                 );
 
@@ -1128,30 +1216,17 @@
                         const tr = document.createElement('tr');
                         tr.className = "hover:bg-gray-800 transition duration-150 border-b border-gray-700/50 last:border-none";
 
-                        const userDisplay = log.username ?
-                            `<div>${log.username}</div><div class="text-xs text-gray-400 font-mono">${log.ip_address.substring(0, 15)}...</div>` :
-                            `<div class="text-gray-400">Unauthenticated</div><div class="text-xs font-mono">${log.ip_address.substring(0, 15)}...</div>`;
-
-                        const endpointShort = log.endpoint.length > 30 ?
-                            log.endpoint.substring(0, 27) + '...' : log.endpoint;
-
-                        const timeoutBadge = log.timeout_applied ?
-                            `<span class="badge badge-timeout">${log.timeout_minutes} min</span>` :
-                            '<span class="text-xs text-gray-400">No</span>';
-
-                        const showButton = log.user_id && (currentUserRole === 'owner' || currentUserRole === 'admin') && log.ip_address !== 'Admin Action';
-
                         tr.innerHTML = `
-                            <td class="py-4 px-4 text-sm">${userDisplay}</td>
-                            <td class="py-4 px-4 text-sm text-gray-300" title="${log.endpoint}">${endpointShort}</td>
-                            <td class="py-4 px-4 text-sm text-gray-300">${log.limit_hit}</td>
-                            <td class="py-4 px-4 text-sm text-gray-400">
-                                <div>${log.time_ago}</div>
-                                <div class="text-xs">${new Date(log.occurred_at).toLocaleTimeString()}</div>
-                            </td>
-                            <td class="py-4 px-4 text-sm">${timeoutBadge}</td>
                             <td class="py-4 px-4 text-sm">
-                                ${showButton ?
+                                <div class="font-medium text-white">${log.username || 'Guest'}</div>
+                                <div class="text-xs text-gray-500 font-mono">${log.ip_address.substring(0, 10)}...</div>
+                            </td>
+                            <td class="py-4 px-4 text-sm text-gray-300 font-mono text-xs" title="${log.endpoint}">${log.endpoint}</td>
+                            <td class="py-4 px-4 text-sm text-white font-bold">${log.hit_count}</td>
+                            <td class="py-4 px-4 text-sm text-gray-400">${log.time_ago}</td>
+                            <td class="py-4 px-4 text-sm">${log.timeout_applied ? '<span class="badge badge-timeout">Yes</span>' : '<span class="text-gray-600">-</span>'}</td>
+                            <td class="py-4 px-4 text-sm">
+                                ${log.user_id ?
                                 `<button class="clear-log-timeout-btn bg-yellow-900/30 text-yellow-500 hover:text-yellow-300 hover:bg-yellow-900/60 p-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed" 
                                     data-userid="${log.user_id}" 
                                     data-username="${log.username || 'User'}" 
@@ -1177,7 +1252,6 @@
                             const username = button.dataset.username;
 
                             await handleClearRateLimitTimeout(userId, username);
-
                         });
                     });
 
@@ -1188,6 +1262,39 @@
             }
 
             refreshRatelimitBtn.addEventListener('click', fetchRateLimitLogs);
+
+            document.getElementById('btn-purge-inactive').addEventListener('click', async () => {
+                if (await showConfirmModal("Purge Inactive Users?", "Delete users with no uploads in 3 months?", null, "bg-gray-600 hover:bg-gray-500")) {
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/admin/purge/inactive_users`, { method: 'POST', credentials: 'include' });
+                        const d = await res.json();
+                        showAdminMessage(d.message || d.error, d.success ? 'success' : 'error');
+                    } catch (e) { showAdminMessage("Network error", "error"); }
+                }
+            });
+
+            document.getElementById('btn-purge-images').addEventListener('click', async () => {
+                if (await showConfirmModal("Purge ALL Images?", "This deletes every single image on the server.", null, "bg-orange-700")) {
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/admin/purge/images`, { method: 'POST', credentials: 'include' });
+                        const d = await res.json();
+                        showAdminMessage(d.message || d.error, d.success ? 'success' : 'error');
+                    } catch (e) { showAdminMessage("Network error", "error"); }
+                }
+            });
+
+            document.getElementById('btn-purge-nuclear').addEventListener('click', async () => {
+                const confirmed = await showConfirmModal("NUCLEAR PURGE?", "Delete EVERYTHING (Users, Logs, Images)? Only Owner/Admins survive. Bans are KEPT.", "Type 'DELETE EVERYTHING' to confirm", "bg-red-800");
+                if (confirmed === 'DELETE EVERYTHING') {
+                    try {
+                        const res = await fetch(`${API_BASE_URL}/admin/purge/nuclear`, { method: 'POST', credentials: 'include' });
+                        const d = await res.json();
+                        showAdminMessage(d.message || d.error, d.success ? 'success' : 'error');
+                    } catch (e) { showAdminMessage("Network error", "error"); }
+                } else if (confirmed) {
+                    showAdminMessage("Purge cancelled: Incorrect confirmation text.", "error");
+                }
+            });
 
             checkAdminAuth();
         });
