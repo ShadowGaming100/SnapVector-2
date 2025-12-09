@@ -640,7 +640,7 @@
                 }, 5000);
             }
 
-            function showConfirmModal(title, text, inputPlaceholder = null, confirmClass = 'bg-red-600 hover:bg-red-700 focus:ring-red-500') {
+            function showConfirmModal(title, text, inputPlaceholder = null, confirmClass = 'bg-red-600 hover:bg-red-700 focus:ring-red-500', inputType = 'text') {
                 confirmTitle.textContent = title;
                 confirmText.textContent = text;
                 confirmBtn.className = `inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${confirmClass}`;
@@ -648,9 +648,11 @@
                 if (inputPlaceholder) {
                     confirmInput.placeholder = inputPlaceholder;
                     confirmInput.value = '';
+                    confirmInput.setAttribute('type', inputType);
                     confirmInput.classList.remove('hidden');
                 } else {
                     confirmInput.classList.add('hidden');
+                    confirmInput.setAttribute('type', 'text');
                 }
 
                 confirmModal.classList.remove('hidden');
@@ -666,7 +668,6 @@
             });
             confirmBtn.addEventListener('click', () => {
                 confirmModal.classList.add('hidden');
-                // Return input value if present, else true
                 if (confirmResolve) confirmResolve(confirmInput.classList.contains('hidden') ? true : confirmInput.value);
             });
 
@@ -1284,15 +1285,33 @@
             });
 
             document.getElementById('btn-purge-nuclear').addEventListener('click', async () => {
-                const confirmed = await showConfirmModal("NUCLEAR PURGE?", "Delete EVERYTHING (Users, Logs, Images)? Only Owner/Admins survive. Bans are KEPT.", "Type 'DELETE EVERYTHING' to confirm", "bg-red-800");
-                if (confirmed === 'DELETE EVERYTHING') {
+                const password = await showConfirmModal(
+                    "NUCLEAR PURGE - PASSWORD REQUIRED",
+                    "To confirm this destructive action, please enter your current user password.",
+                    "Enter your password",
+                    "bg-red-800 hover:bg-red-700",
+                    'password'
+                );
+
+                if (password && typeof password === 'string' && password.trim() !== '') {
                     try {
-                        const res = await fetch(`${API_BASE_URL}/admin/purge/nuclear`, { method: 'POST', credentials: 'include' });
+                        const res = await fetch(`${API_BASE_URL}/admin/purge/nuclear`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ password: password }),
+                            credentials: 'include'
+                        });
                         const d = await res.json();
-                        showAdminMessage(d.message || d.error, d.success ? 'success' : 'error');
-                    } catch (e) { showAdminMessage("Network error", "error"); }
-                } else if (confirmed) {
-                    showAdminMessage("Purge cancelled: Incorrect confirmation text.", "error");
+                        if (d.success) {
+                            showAdminMessage(d.message, 'success');
+                        } else {
+                            showAdminMessage(d.error || 'Password verification failed or purge failed.', 'error');
+                        }
+                    } catch (e) {
+                        showAdminMessage("Network error during purge attempt.", "error");
+                    }
+                } else if (password) {
+                    showAdminMessage("Purge cancelled: Password was not entered.", "error");
                 }
             });
 
