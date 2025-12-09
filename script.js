@@ -1050,24 +1050,88 @@
             if (response.ok) {
                 const data = await response.json();
 
-                if (response.status === 200 || data.status_code === 200 || data.status === 'operational' || data.api === 'operational') {
-                    statusDot.className = 'w-2 h-2 rounded-full bg-green-500';
+                // Determine overall status
+                let overallStatus = 'operational';
+                let statusColor = 'text-green-400';
+                let dotColor = 'bg-green-500';
+
+                if (response.status === 200 || data.status_code === 200 ||
+                    data.status === 'operational' || data.api === 'operational') {
+                    // All good
                     statusText.textContent = 'All Systems Operational';
-                    apiStatus.textContent = 'Operational';
-                    apiStatus.className = 'text-xs font-semibold text-green-400';
-                    statusMessage.classList.add('hidden');
+                } else if (data.status === 'degraded' || data.api === 'degraded' ||
+                    response.status === 206 || data.status_code === 206) {
+                    overallStatus = 'degraded';
+                    statusColor = 'text-yellow-400';
+                    dotColor = 'bg-yellow-500';
+                    statusText.textContent = 'Service Degraded';
                 } else {
-                    throw new Error('API not operational');
+                    overallStatus = 'unavailable';
+                    statusColor = 'text-red-400';
+                    dotColor = 'bg-red-500';
+                    statusText.textContent = 'Service Issues Detected';
+                }
+
+                // Update overall status indicator
+                statusDot.className = `w-2 h-2 rounded-full ${dotColor}`;
+
+                // Update all service statuses based on the same response
+                const apiStatusElement = document.getElementById('api-status');
+                const uploadStatusElement = document.getElementById('upload-status');
+                const dbStatusElement = document.getElementById('db-status');
+
+                // Set all to the same status based on overall response
+                if (overallStatus === 'operational') {
+                    apiStatusElement.textContent = 'Operational';
+                    apiStatusElement.className = 'text-xs font-semibold text-green-400';
+                    uploadStatusElement.textContent = 'Operational';
+                    uploadStatusElement.className = 'text-xs font-semibold text-green-400';
+                    dbStatusElement.textContent = 'Operational';
+                    dbStatusElement.className = 'text-xs font-semibold text-green-400';
+                    statusMessage.classList.add('hidden');
+                } else if (overallStatus === 'degraded') {
+                    apiStatusElement.textContent = 'Degraded';
+                    apiStatusElement.className = 'text-xs font-semibold text-yellow-400';
+                    uploadStatusElement.textContent = 'Degraded';
+                    uploadStatusElement.className = 'text-xs font-semibold text-yellow-400';
+                    dbStatusElement.textContent = 'Degraded';
+                    dbStatusElement.className = 'text-xs font-semibold text-yellow-400';
+
+                    statusMessage.querySelector('p').textContent = 'We are experiencing partial service degradation. Some features may be limited.';
+                    statusMessage.className = 'p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg';
+                    statusMessage.classList.remove('hidden');
+                } else {
+                    apiStatusElement.textContent = 'Unavailable';
+                    apiStatusElement.className = 'text-xs font-semibold text-red-400';
+                    uploadStatusElement.textContent = 'Unavailable';
+                    uploadStatusElement.className = 'text-xs font-semibold text-red-400';
+                    dbStatusElement.textContent = 'Unavailable';
+                    dbStatusElement.className = 'text-xs font-semibold text-red-400';
+
+                    statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
+                    statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
+                    statusMessage.classList.remove('hidden');
                 }
             } else {
                 throw new Error('Status check failed');
             }
         } catch (error) {
+            console.error('Status check error:', error);
+
+            // Set all statuses to unavailable on error
             statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
             statusText.textContent = 'Service Issues Detected';
 
-            apiStatus.textContent = 'Unavailable';
-            apiStatus.className = 'text-xs font-semibold text-red-400';
+            const apiStatusElement = document.getElementById('api-status');
+            const uploadStatusElement = document.getElementById('upload-status');
+            const dbStatusElement = document.getElementById('db-status');
+
+            apiStatusElement.textContent = 'Unavailable';
+            apiStatusElement.className = 'text-xs font-semibold text-red-400';
+            uploadStatusElement.textContent = 'Unavailable';
+            uploadStatusElement.className = 'text-xs font-semibold text-red-400';
+            dbStatusElement.textContent = 'Unavailable';
+            dbStatusElement.className = 'text-xs font-semibold text-red-400';
 
             statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
             statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
