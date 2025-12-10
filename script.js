@@ -1,5 +1,4 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
-
     const API_BASE_URL = 'https://snapvector.pulledtheirlife.support';
 
     let currentUser = {
@@ -9,32 +8,27 @@
         is_admin: false
     };
 
+    // Get all DOM elements
     const authView = document.getElementById('auth-view');
     const appView = document.getElementById('app-view');
     const messageBox = document.getElementById('message-box');
-
     const uploaderView = document.getElementById('uploader-view');
     const detailsView = document.getElementById('details-view');
     const dashboardView = document.getElementById('dashboard-view');
     const accountView = document.getElementById('account-view');
-
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     const guestLoginButton = document.getElementById('guest-login-button');
-
     const homeButton = document.getElementById('home-button');
     const accountButton = document.getElementById('account-button');
     const logoutButton = document.getElementById('logout-button');
     const userGreeting = document.getElementById('user-greeting');
     const adminButton = document.getElementById('admin-button');
     const announcementBanner = document.getElementById('announcement-banner');
-    let announcementInterval = null;
-
     const toggleLoginPassword = document.getElementById('toggle-login-password');
     const loginPasswordInput = document.getElementById('login-password');
     const toggleRegisterPassword = document.getElementById('toggle-register-password');
     const registerPasswordInput = document.getElementById('register-password');
-
     const uploadForm = document.getElementById('upload-form');
     const fileInput = document.getElementById('file-upload');
     const submitButton = document.getElementById('submit-button');
@@ -43,7 +37,12 @@
     const previewZone = document.getElementById('preview-zone');
     const previewContainer = document.getElementById('preview-media-container');
     const clearPreviewButton = document.getElementById('clear-preview-button');
-
+    const multiPreviewContainer = document.getElementById('multi-preview-container');
+    const uploadQueue = document.getElementById('upload-queue');
+    const queueItems = document.getElementById('queue-items');
+    const cancelAllButton = document.getElementById('cancel-all-uploads');
+    const fileCountSpan = document.getElementById('file-count');
+    const queueStats = document.getElementById('queue-stats');
     const detailsTitle = document.getElementById('details-title');
     const shareLinkInput = document.getElementById('share-link');
     const copyButton = document.getElementById('copy-button');
@@ -51,35 +50,69 @@
     const deleteButton = document.getElementById('delete-button');
     const expirationInfoBox = document.getElementById('expiration-info');
     const expirationText = document.getElementById('expiration-text').querySelector('span');
-    let currentImageId = null;
-
     const imageGallery = document.getElementById('image-gallery');
-    const noImagesMessage = document.getElementById('no-images-message');
-
+    const noFilesMessage = document.getElementById('no-images-message');
     const backToDashboardButton = document.getElementById('back-to-dashboard-button');
     const accountFormsFull = document.getElementById('account-forms-full');
     const accountFormsGuest = document.getElementById('account-forms-guest');
-
     const changeUsernameForm = document.getElementById('change-username-form');
     const newUsernameInput = document.getElementById('new-username');
-
     const changePasswordForm = document.getElementById('change-password-form');
     const currentPasswordInput = document.getElementById('current-password');
     const newPasswordInput = document.getElementById('new-password');
     const confirmPasswordInput = document.getElementById('confirm-password');
-
     const sessionsList = document.getElementById('sessions-list');
     const sessionsLoading = document.getElementById('sessions-loading');
-
     const deleteAccountForm = document.getElementById('delete-account-form');
     const deletePasswordField = document.getElementById('delete-password-field');
     const deleteConfirmPasswordInput = document.getElementById('delete-confirm-password');
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const statusModal = document.getElementById('status-modal');
+    const closeStatusModal = document.getElementById('close-status-modal');
+    const apiStatus = document.getElementById('api-status');
+    const statusMessage = document.getElementById('status-message');
+    const lastCheckTime = document.getElementById('last-check-time');
+    const tosModal = document.getElementById('tos-modal');
+    const closeTosModal = document.getElementById('close-tos-modal');
+    const acceptTosBtn = document.getElementById('accept-tos');
+    const tosPopupCheckbox = document.getElementById('tos-popup-checkbox');
+    const videoPlayerContainer = document.getElementById('video-player-container');
+    const customVideoPlayer = document.getElementById('custom-video-player');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressFill = document.querySelector('.progress-fill');
+    const currentTimeEl = document.getElementById('current-time');
+    const durationEl = document.getElementById('duration');
+    const muteBtn = document.getElementById('mute-btn');
+    const volumeSlider = document.querySelector('.volume-slider');
+    const volumeFill = document.querySelector('.volume-fill');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const imagePreview = document.getElementById('image-preview');
+    
+    // State variables
+    let currentImageId = null;
+    let pendingRegistration = null;
+    let tosAcceptAllowed = false;
+    let tosTimer = null;
+    let statusCheckInterval = null;
+    let announcementInterval = null;
+    
+    // Upload queue state - MODIFIED
+    let uploadQueueState = [];
+    let isUploading = false;
+    let hasSubmitted = false; // NEW: Track if user has submitted
+    let currentUploadIndex = 0;
+    let uploadsCompleted = 0;
+    let uploadsFailed = 0;
+    
+    // Video player state
+    let isVideoPlaying = false;
+    let isVideoMuted = false;
+    let videoVolume = 1;
 
-    /**
-     * Shows a message box with styling based on type.
-     * @param {string} message - The message to display.
-     * @param {string} type - 'success', 'error', or 'info'.
-     */
+    // Show message function
     function showMessage(message, type = 'info') {
         const baseClasses = 'p-4 text-sm rounded-lg transition-opacity duration-300';
         let typeClasses = '';
@@ -116,14 +149,6 @@
         }
     }
 
-
-    /**
-     * Fetches a resource with a specified timeout.
-     * @param {string} url - The URL to fetch.
-     * @param {object} options - Fetch options (method, headers, body, etc.).
-     * @param {number} timeout - Timeout in milliseconds.
-     * @returns {Promise<Response>} A promise that resolves with the fetch Response.
-     */
     async function fetchWithTimeout(url, options = {}, timeout = 8000) {
         const controller = new AbortController();
         const signal = controller.signal;
@@ -141,6 +166,7 @@
         return Promise.race([fetchPromise, timeoutPromise]);
     }
 
+    // View management
     function showView(viewToShow) {
         [authView, appView, uploaderView, detailsView, dashboardView, accountView].forEach(view => {
             view.classList.add('hidden');
@@ -165,6 +191,7 @@
         showView('dashboard');
         fetchImages();
         clearPreview();
+        resetUploadQueue();
     }
 
     function showAccountView() {
@@ -188,7 +215,456 @@
         clearPreview();
     }
 
+    // File handling
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 
+    const MAX_IMAGE_SIZE_MB = 10;
+    const MAX_VIDEO_SIZE_MB = 50;
+    const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi', 'video/mkv', 'video/flv', 'video/quicktime'];
+    const MAX_FILES = 10;
+
+    function isImage(fileType) {
+        return ALLOWED_IMAGE_TYPES.includes(fileType);
+    }
+
+    function isVideo(fileType) {
+        return ALLOWED_VIDEO_TYPES.includes(fileType) || fileType.startsWith('video/');
+    }
+
+    function clearPreview() {
+        fileInput.value = '';
+        const mediaElement = previewContainer.querySelector('img, video');
+        if (mediaElement) {
+            mediaElement.remove();
+        }
+        previewZone.classList.add('hidden');
+        dropZone.classList.remove('hidden');
+        multiPreviewContainer.innerHTML = '';
+        multiPreviewContainer.classList.add('hidden');
+        
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+        fileCountSpan.textContent = '0';
+    }
+
+    function resetUploadQueue() {
+        uploadQueueState = [];
+        isUploading = false;
+        hasSubmitted = false; // Reset submission flag
+        currentUploadIndex = 0;
+        uploadsCompleted = 0;
+        uploadsFailed = 0;
+        queueItems.innerHTML = '';
+        uploadQueue.classList.add('hidden');
+        updateQueueStats();
+        fileCountSpan.textContent = '0';
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+        document.getElementById('button-text').textContent = 'Upload Files';
+    }
+
+    function updateQueueStats() {
+        const total = uploadQueueState.length;
+        const completed = uploadQueueState.filter(item => item.status === 'completed').length;
+        const failed = uploadQueueState.filter(item => item.status === 'failed').length;
+        
+        queueStats.textContent = `${completed}/${total} files uploaded (${failed} failed)`;
+        
+        if (total > 0 && total === completed && !isUploading) {
+            showMessage(`All files uploaded successfully! ${failed > 0 ? `${failed} failed.` : ''}`, 'success');
+            // Reset everything after a delay so user can see the success
+            setTimeout(() => {
+                resetUploadQueue();
+                clearPreview();
+            }, 3000);
+        }
+    }
+
+    function createUploadQueueItem(file, index) {
+        const item = document.createElement('div');
+        item.className = 'upload-item';
+        item.id = `upload-item-${index}`;
+        item.innerHTML = `
+            <div class="upload-item-info">
+                <div class="upload-filename">${file.name}</div>
+                <div class="upload-progress-container">
+                    <div class="upload-progress-bar" id="progress-${index}"></div>
+                </div>
+                <div class="upload-status" id="status-${index}">Pending...</div>
+            </div>
+            <button class="upload-cancel" data-index="${index}">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        return item;
+    }
+
+    function updateUploadProgress(index, percentage, status) {
+        const progressBar = document.getElementById(`progress-${index}`);
+        const statusEl = document.getElementById(`status-${index}`);
+        
+        if (progressBar) {
+            progressBar.style.width = `${percentage}%`;
+        }
+        
+        if (statusEl) {
+            statusEl.textContent = status;
+            if (status.includes('Failed')) {
+                statusEl.style.color = '#ef4444';
+            } else if (status.includes('Completed')) {
+                statusEl.style.color = '#10b981';
+            }
+        }
+    }
+
+    // Handle multiple file selection - FIXED: Keep drop zone visible and allow adding more
+    function handleMultipleFiles(files) {
+        if (files.length === 0) return;
+        
+        // Don't allow adding more files if already submitted
+        if (hasSubmitted) {
+            showMessage('Please wait for current uploads to complete or cancel them first.', 'error');
+            return;
+        }
+        
+        // Calculate how many more files we can add
+        const availableSlots = MAX_FILES - uploadQueueState.length;
+        if (availableSlots <= 0) {
+            showMessage(`Maximum ${MAX_FILES} files allowed. Remove some files first.`, 'error');
+            return;
+        }
+        
+        const filesToAdd = Array.from(files).slice(0, availableSlots);
+        
+        // Add files to queue
+        filesToAdd.forEach((file, relativeIndex) => {
+            const isFileTypeImage = isImage(file.type);
+            const isFileTypeVideo = isVideo(file.type);
+            let maxSize = 0;
+            let fileTypeLabel = '';
+
+            if (isFileTypeImage) {
+                maxSize = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+                fileTypeLabel = 'Image';
+            } else if (isFileTypeVideo) {
+                maxSize = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+                fileTypeLabel = 'Video';
+            } else {
+                showMessage(`File "${file.name}" has invalid type. Skipped.`, 'error');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                showMessage(`File "${file.name}" exceeds size limit for ${fileTypeLabel}. Skipped.`, 'error');
+                return;
+            }
+
+            // Add to upload queue
+            const index = uploadQueueState.length;
+            uploadQueueState.push({
+                file,
+                index,
+                status: 'pending',
+                progress: 0
+            });
+
+            // Create preview thumbnail
+            const previewItem = document.createElement('div');
+            previewItem.className = 'multi-preview-item';
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (isFileTypeImage) {
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="${file.name}">
+                        <button class="multi-preview-remove" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                } else if (isFileTypeVideo) {
+                    previewItem.innerHTML = `
+                        <video src="${e.target.result}" muted></video>
+                        <button class="multi-preview-remove" data-index="${index}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                }
+                
+                // Add remove button event
+                previewItem.querySelector('.multi-preview-remove').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFileFromQueue(index);
+                });
+            };
+            reader.readAsDataURL(file);
+            
+            multiPreviewContainer.appendChild(previewItem);
+        });
+
+        // Update UI - KEEP DROP ZONE VISIBLE
+        multiPreviewContainer.classList.remove('hidden');
+        dropZone.classList.remove('hidden'); // Keep drop zone visible
+        
+        // Update button and queue
+        fileCountSpan.textContent = uploadQueueState.length;
+        submitButton.disabled = uploadQueueState.length === 0;
+        submitButton.classList.toggle('opacity-50', uploadQueueState.length === 0);
+        submitButton.classList.toggle('cursor-not-allowed', uploadQueueState.length === 0);
+        
+        if (uploadQueueState.length > 0) {
+            uploadQueue.classList.remove('hidden');
+            queueItems.innerHTML = '';
+            uploadQueueState.forEach((item, index) => {
+                queueItems.appendChild(createUploadQueueItem(item.file, index));
+            });
+            
+            // Add cancel button events
+            document.querySelectorAll('.upload-cancel').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    removeFileFromQueue(index);
+                });
+            });
+            
+            updateQueueStats();
+        }
+    }
+
+    function removeFileFromQueue(index) {
+        // Remove from state
+        uploadQueueState = uploadQueueState.filter((item, i) => i !== index);
+        
+        // Re-index remaining items
+        uploadQueueState.forEach((item, i) => {
+            item.index = i;
+        });
+        
+        // Update UI
+        fileCountSpan.textContent = uploadQueueState.length;
+        submitButton.disabled = uploadQueueState.length === 0;
+        submitButton.classList.toggle('opacity-50', uploadQueueState.length === 0);
+        submitButton.classList.toggle('cursor-not-allowed', uploadQueueState.length === 0);
+        
+        // Re-render previews
+        multiPreviewContainer.innerHTML = '';
+        uploadQueueState.forEach((item, i) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'multi-preview-item';
+                
+                if (isImage(item.file.type)) {
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="${item.file.name}">
+                        <button class="multi-preview-remove" data-index="${i}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                } else if (isVideo(item.file.type)) {
+                    previewItem.innerHTML = `
+                        <video src="${e.target.result}" muted></video>
+                        <button class="multi-preview-remove" data-index="${i}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                }
+                
+                previewItem.querySelector('.multi-preview-remove').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeFileFromQueue(i);
+                });
+                
+                multiPreviewContainer.appendChild(previewItem);
+            };
+            reader.readAsDataURL(item.file);
+        });
+        
+        // Update queue items
+        queueItems.innerHTML = '';
+        uploadQueueState.forEach((item, i) => {
+            queueItems.appendChild(createUploadQueueItem(item.file, i));
+        });
+        
+        // Re-add cancel events
+        document.querySelectorAll('.upload-cancel').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.currentTarget.dataset.index);
+                removeFileFromQueue(index);
+            });
+        });
+        
+        updateQueueStats();
+        
+        if (uploadQueueState.length === 0) {
+            uploadQueue.classList.add('hidden');
+            multiPreviewContainer.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        }
+    }
+
+    // Process upload queue - MODIFIED to disable adding more files
+    async function processUploadQueue() {
+        if (isUploading || uploadQueueState.length === 0) return;
+        
+        // Set submission flag to prevent adding more files
+        hasSubmitted = true;
+        isUploading = true;
+        
+        // Disable drop zone and file input
+        dropZone.style.opacity = '0.5';
+        dropZone.style.cursor = 'not-allowed';
+        dropZone.querySelector('input').disabled = true;
+        
+        submitButton.disabled = true;
+        document.getElementById('button-text').textContent = 'Uploading...';
+        loadingIndicator.classList.remove('hidden');
+        
+        // Rate limiting: 5 files per minute
+        const UPLOAD_LIMIT = 5;
+        const TIME_WINDOW = 60000; // 1 minute
+        
+        for (let i = 0; i < uploadQueueState.length; i++) {
+            if (uploadQueueState[i].status !== 'pending') continue;
+            
+            currentUploadIndex = i;
+            uploadQueueState[i].status = 'uploading';
+            
+            // Check rate limit
+            const recentUploads = uploadQueueState.filter(item => 
+                item.status === 'completed' || item.status === 'failed'
+            ).length;
+            
+            if (recentUploads >= UPLOAD_LIMIT) {
+                showMessage('Upload limit reached. Please wait 1 minute before uploading more files.', 'info');
+                break;
+            }
+            
+            await uploadFile(uploadQueueState[i].file, i);
+            
+            // Small delay between uploads
+            if (i < uploadQueueState.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        
+        // Re-enable drop zone and file input when done
+        isUploading = false;
+        dropZone.style.opacity = '1';
+        dropZone.style.cursor = 'pointer';
+        dropZone.querySelector('input').disabled = false;
+        
+        submitButton.disabled = false;
+        document.getElementById('button-text').textContent = `Upload Files (<span id="file-count">0</span>)`;
+        loadingIndicator.classList.add('hidden');
+    }
+
+    async function uploadFile(file, index) {
+        updateUploadProgress(index, 0, 'Uploading...');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/upload`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                uploadQueueState[index].status = 'completed';
+                uploadsCompleted++;
+                updateUploadProgress(index, 100, 'Completed');
+                
+                if (uploadsCompleted === 1) {
+                    // Show details of first successful upload
+                    showDetailsView(data.details_id);
+                }
+            } else {
+                throw new Error('Upload failed');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            uploadQueueState[index].status = 'failed';
+            uploadsFailed++;
+            updateUploadProgress(index, 0, 'Failed - ' + (error.message || 'Unknown error'));
+        }
+        
+        updateQueueStats();
+    }
+
+    // Video player functionality
+    function initializeVideoPlayer(videoUrl) {
+        if (!customVideoPlayer) return;
+        
+        customVideoPlayer.src = videoUrl;
+        videoPlayerContainer.classList.remove('hidden');
+        imagePreview.classList.add('hidden');
+        
+        // Reset video player
+        customVideoPlayer.currentTime = 0;
+        isVideoPlaying = false;
+        updatePlayPauseButton();
+        
+        // Set up event listeners
+        customVideoPlayer.addEventListener('loadedmetadata', () => {
+            durationEl.textContent = formatTime(customVideoPlayer.duration);
+        });
+        
+        customVideoPlayer.addEventListener('timeupdate', () => {
+            const currentTime = customVideoPlayer.currentTime;
+            const duration = customVideoPlayer.duration;
+            const progress = (currentTime / duration) * 100;
+            
+            currentTimeEl.textContent = formatTime(currentTime);
+            progressFill.style.width = `${progress}%`;
+        });
+        
+        customVideoPlayer.addEventListener('ended', () => {
+            isVideoPlaying = false;
+            updatePlayPauseButton();
+        });
+        
+        // Set initial volume
+        customVideoPlayer.volume = videoVolume;
+        customVideoPlayer.muted = isVideoMuted;
+        updateVolumeUI();
+    }
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updatePlayPauseButton() {
+        if (playPauseBtn) {
+            playPauseBtn.innerHTML = isVideoPlaying ? 
+                '<i class="fas fa-pause"></i>' : 
+                '<i class="fas fa-play"></i>';
+        }
+    }
+
+    function updateVolumeUI() {
+        if (muteBtn) {
+            muteBtn.innerHTML = isVideoMuted ? 
+                '<i class="fas fa-volume-mute"></i>' : 
+                '<i class="fas fa-volume-up"></i>';
+        }
+        if (volumeFill) {
+            volumeFill.style.width = `${videoVolume * 100}%`;
+        }
+    }
+
+    // Image gallery functions
     async function fetchImages() {
         try {
             const response = await fetchWithTimeout(`${API_BASE_URL}/images`, {
@@ -207,9 +683,10 @@
             imageGallery.innerHTML = '';
 
             if (images.length === 0) {
-                noImagesMessage.classList.remove('hidden');
+                noFilesMessage.classList.remove('hidden');
+                noFilesMessage.textContent = "You haven't uploaded any files yet.";
             } else {
-                noImagesMessage.classList.add('hidden');
+                noFilesMessage.classList.add('hidden');
                 images.forEach(image => {
                     const expiryClass = image.is_expiring_soon ? 'border-2 border-red-500 expiring-glow' : 'border-gray-600';
                     const item = document.createElement('div');
@@ -221,7 +698,7 @@
 
                     let mediaHtml;
                     if (isVideoFile) {
-                        mediaHtml = `<video src="${image.url}" class="w-full h-32 object-cover" muted loop autoplay></video>`;
+                        mediaHtml = `<video src="${image.url}" class="w-full aspect-video object-cover" loop muted></video>`;
                     } else {
                         mediaHtml = `<img src="${image.url}" alt="Uploaded on ${new Date(image.upload_date).toLocaleDateString()}" class="w-full h-32 object-cover">`;
                     }
@@ -247,11 +724,12 @@
             } else if (error.message === 'Unauthorized') {
                 console.log("Session not fully ready yet, or images restricted.");
             } else {
-                showMessage('Could not load your images.', 'error');
+                showMessage('Could not load your files.', 'error');
             }
         }
     }
 
+    // Announcements function
     async function fetchAnnouncements() {
         if (!announcementBanner) return;
         try {
@@ -282,18 +760,161 @@
         }
     }
 
+    // Sessions function
+    async function fetchSessions() {
+        sessionsLoading.classList.remove('hidden');
+        sessionsList.innerHTML = '';
+        sessionsList.appendChild(sessionsLoading);
 
-    /**
-     * Updates the UI based on authentication status.
-     * @param {boolean} isAuthenticated - Whether the user is logged in.
-     * @param {object|null} userData - User data (username, is_guest) or null.
-     */
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/account/sessions`, {
+                credentials: 'include'
+            }, 8000);
+            const data = await response.json();
+
+            sessionsList.innerHTML = '';
+
+            if (data && data.length > 0) {
+                data.forEach(session => {
+                    const { os, browser, icon } = parseUserAgent(session.user_agent);
+                    const loginTime = new Date(session.login_at).toLocaleString();
+                    const isCurrent = (session.hashed_ip === currentUser.last_seen_ip_hash);
+
+                    const li = document.createElement('li');
+                    li.className = "flex items-center justify-between p-3 bg-gray-800 rounded-lg";
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid ${icon} text-2xl text-gray-400 w-6 text-center"></i>
+                            <div>
+                                <p class="font-medium text-white">${os} (${browser})</p>
+                                <p class="text-sm text-gray-400">${loginTime}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-sm font-mono text-gray-500" title="${session.hashed_ip}">${session.hashed_ip.substring(0, 10)}...</p>
+                             ${isCurrent ? '<span class="text-xs font-bold text-green-400">Current Session</span>' : ''}
+                        </div>
+                    `;
+                    sessionsList.appendChild(li);
+                });
+            } else {
+                sessionsList.innerHTML = `<li class="text-gray-400">No session history found.</li>`;
+            }
+
+        } catch (error) {
+            sessionsList.innerHTML = `<li class="text-red-400">Could not load session history.</li>`;
+        }
+    }
+
+    function parseUserAgent(ua) {
+        let os = "Unknown OS";
+        let browser = "Unknown Browser";
+        let icon = "fa-desktop";
+
+        if (!ua) return { os, browser, icon };
+
+        if (ua.includes("Windows")) { os = "Windows"; icon = "fa-brands fa-windows"; }
+        else if (ua.includes("Macintosh") || ua.includes("Mac OS")) { os = "Mac OS"; icon = "fa-brands fa-apple"; }
+        else if (ua.includes("Linux")) { os = "Linux"; icon = "fa-brands fa-linux"; }
+        else if (ua.includes("Android")) { os = "Android"; icon = "fa-brands fa-android"; }
+        else if (ua.includes("iPhone") || ua.includes("iPad")) { os = "iOS"; icon = "fa-brands fa-apple"; }
+
+        if (ua.includes("Edg/")) { browser = "Edge"; }
+        else if (ua.includes("Chrome")) { browser = "Chrome"; }
+        else if (ua.includes("Firefox")) { browser = "Firefox"; }
+        else if (ua.includes("Safari")) { browser = "Safari"; }
+
+        return { os, browser, icon };
+    }
+
+    // Show details view
+    async function showDetailsView(id) {
+        currentImageId = id;
+        try {
+            const response = await fetchWithTimeout(`${API_BASE_URL}/image/${id}`, {
+                credentials: 'include'
+            }, 8000);
+            const data = await response.json();
+            if (data.success) {
+                showView('details');
+                const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
+                detailsTitle.textContent = `File Details: ${truncateFilename(data.filename, 35)}`;
+                shareLinkInput.value = data.url;
+
+                const fileExtension = data.filename.split('.').pop().toLowerCase();
+                const isVideoFile = ALLOWED_VIDEO_TYPES.some(type => type.endsWith(fileExtension));
+
+                if (isVideoFile) {
+                    // Show video player
+                    initializeVideoPlayer(data.url);
+                } else {
+                    // Show image
+                    videoPlayerContainer.classList.add('hidden');
+                    imagePreview.classList.remove('hidden');
+                    imagePreview.src = data.url;
+                }
+
+                if (expiryDate) {
+                    const now = new Date();
+                    const diffTime = expiryDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const formattedExpiryDate = expiryDate.toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    if (diffDays <= 3) {
+                        expirationText.textContent = `PURGE ALERT! This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationInfoBox.className = 'bg-red-900/50 border-2 border-red-500 rounded-lg p-3';
+                        expirationText.parentElement.classList.remove('text-blue-300');
+                        expirationText.parentElement.classList.add('text-red-300');
+                        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-triangle-exclamation';
+                    } else {
+                        expirationText.textContent = `This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
+                        expirationInfoBox.className = 'bg-blue-900/50 border-2 border-blue-500 rounded-lg p-3';
+                        expirationText.parentElement.classList.remove('text-red-300');
+                        expirationText.parentElement.classList.add('text-blue-300');
+                        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-circle-info';
+                    }
+                    expirationInfoBox.classList.remove('hidden');
+                } else {
+                    expirationInfoBox.classList.add('hidden');
+                }
+
+                if (data.is_owner) {
+                    deleteButton.classList.remove('hidden');
+                    deleteButton.classList.add('flex', 'items-center', 'justify-center', 'space-x-2');
+                    deleteButton.innerHTML = `<i class="fa-solid fa-trash"></i> <span>Delete File</span>`;
+                } else {
+                    deleteButton.classList.add('hidden');
+                    deleteButton.classList.remove('flex', 'items-center', 'justify-center', 'space-x-2');
+                }
+            } else {
+                showMessage(data.error, 'error');
+                showDashboardView();
+            }
+        } catch (error) {
+            console.error('Details fetch error:', error);
+            showMessage('Could not load file details.', 'error');
+            showDashboardView();
+        }
+    }
+
+    function truncateFilename(filename, maxLength = 30) {
+        if (filename.length <= maxLength) return filename;
+        const extensionMatch = filename.match(/\.([0-9a-z]+)$/i);
+        const extension = extensionMatch ? extensionMatch[0] : '';
+        const baseName = extensionMatch ? filename.slice(0, -extension.length) : filename;
+        const maxBaseLength = maxLength - extension.length - 3;
+        if (maxBaseLength <= 0) return filename.substring(0, maxLength - 3) + '...';
+        const cutoff = Math.floor(maxBaseLength * 0.6);
+        return baseName.substring(0, cutoff) + '...' + extension;
+    }
+
+    // Authentication functions
     function updateUI(isAuthenticated, userData = null) {
         if (isAuthenticated && userData) {
             currentUser = { ...userData };
 
             showView('dashboard');
-
             fetchImages();
 
             let roleBadge = '';
@@ -336,20 +957,10 @@
             updateUI(data.authenticated, data);
         } catch (error) {
             console.error('Error checking auth status:', error);
-            if (error.message.includes('timed out')) {
-                showMessage('Server took too long to respond. Please try again.', 'error');
-            } else {
-                showMessage('Connection error. Could not check login status.', 'error');
-            }
             updateUI(false);
         }
     }
 
-    /**
-     * Handles authentication (Login or Register).
-     * @param {string} endpoint - '/login' or '/register'.
-     * @param {object} credentials - { username, password }.
-     */
     async function handleAuth(endpoint, credentials) {
         let response;
         try {
@@ -381,6 +992,76 @@
         }
     }
 
+    // TOS Modal functions
+    function initializeTosModal() {
+        if (tosPopupCheckbox) {
+            tosPopupCheckbox.checked = false;
+            tosPopupCheckbox.disabled = false;
+        }
+        
+        acceptTosBtn.disabled = true;
+        tosAcceptAllowed = false;
+        
+        if (tosTimer) {
+            clearTimeout(tosTimer);
+        }
+        
+        tosTimer = setTimeout(() => {
+            tosAcceptAllowed = true;
+            if (tosPopupCheckbox && tosPopupCheckbox.checked) {
+                acceptTosBtn.disabled = false;
+            }
+        }, 15000);
+    }
+
+    // ========== EVENT LISTENERS ==========
+
+    // TOS Modal events
+    tosPopupCheckbox.addEventListener('change', () => {
+        if (tosAcceptAllowed && tosPopupCheckbox.checked) {
+            acceptTosBtn.disabled = false;
+        } else {
+            acceptTosBtn.disabled = true;
+        }
+    });
+
+    acceptTosBtn.addEventListener('click', () => {
+        localStorage.setItem('tosAccepted', 'true');
+        tosModal.classList.add('hidden');
+        
+        if (tosTimer) {
+            clearTimeout(tosTimer);
+            tosTimer = null;
+        }
+        
+        if (pendingRegistration) {
+            const { username, password } = pendingRegistration;
+            handleAuth('/register', { username, password });
+            pendingRegistration = null;
+        }
+    });
+
+    closeTosModal.addEventListener('click', () => {
+        tosModal.classList.add('hidden');
+        if (tosTimer) {
+            clearTimeout(tosTimer);
+            tosTimer = null;
+        }
+        pendingRegistration = null;
+    });
+
+    tosModal.addEventListener('click', (e) => {
+        if (e.target === tosModal) {
+            tosModal.classList.add('hidden');
+            if (tosTimer) {
+                clearTimeout(tosTimer);
+                tosTimer = null;
+            }
+            pendingRegistration = null;
+        }
+    });
+
+    // Auth events
     guestLoginButton.addEventListener('click', async (e) => {
         e.preventDefault();
         guestLoginButton.disabled = true;
@@ -401,14 +1082,7 @@
             }
         } catch (error) {
             console.error('Guest login error:', error);
-            if (error.message.includes('timed out')) {
-                showMessage('Guest login request timed out. Please try again.', 'error');
-            } else if (response && response.status === 429) {
-                showMessage('Too many guest accounts created. Please try again later.', 'error');
-            }
-            else {
-                showMessage('Network or server error during guest login.', 'error');
-            }
+            showMessage('Network or server error during guest login.', 'error');
         } finally {
             guestLoginButton.disabled = false;
             guestLoginButton.textContent = 'Login as Guest (Saves your images)';
@@ -424,9 +1098,18 @@
 
     registerForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        
         const username = document.getElementById('register-username').value;
         const password = registerPasswordInput.value;
-        handleAuth('/register', { username, password });
+        
+        if (!username || !password) {
+            showMessage('Please fill in all fields', 'error');
+            return;
+        }
+        
+        pendingRegistration = { username, password };
+        tosModal.classList.remove('hidden');
+        initializeTosModal();
     });
 
     logoutButton.addEventListener('click', async () => {
@@ -444,14 +1127,11 @@
             }
         } catch (error) {
             console.error('Logout error:', error);
-            if (error.message.includes('timed out')) {
-                showMessage('Logout request timed out. Please try again.', 'error');
-            } else {
-                showMessage('Network or server error during logout.', 'error');
-            }
+            showMessage('Network or server error during logout.', 'error');
         }
     });
 
+    // Navigation events
     document.getElementById('show-register').addEventListener('click', (e) => {
         e.preventDefault();
         loginForm.classList.add('hidden');
@@ -464,137 +1144,36 @@
         loginForm.classList.remove('hidden');
     });
 
-    function togglePasswordVisibility(input, toggleButton) {
-        const icon = toggleButton.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
+    // Password visibility toggle
+    toggleLoginPassword.addEventListener('click', () => {
+        const icon = toggleLoginPassword.querySelector('i');
+        if (loginPasswordInput.type === 'password') {
+            loginPasswordInput.type = 'text';
             icon.classList.remove('fa-eye');
             icon.classList.add('fa-eye-slash');
         } else {
-            input.type = 'password';
+            loginPasswordInput.type = 'password';
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
-    }
-
-    toggleLoginPassword.addEventListener('click', () => {
-        togglePasswordVisibility(loginPasswordInput, toggleLoginPassword);
     });
 
     toggleRegisterPassword.addEventListener('click', () => {
-        togglePasswordVisibility(registerPasswordInput, toggleRegisterPassword);
+        const icon = toggleRegisterPassword.querySelector('i');
+        if (registerPasswordInput.type === 'password') {
+            registerPasswordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            registerPasswordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
     });
 
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    const MAX_IMAGE_SIZE_MB = 10;
-    const MAX_VIDEO_SIZE_MB = 50;
-    const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
-    const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/avi', 'video/mkv', 'video/flv', 'video/quicktime'];
-
-    function isImage(fileType) {
-        return ALLOWED_IMAGE_TYPES.includes(fileType);
-    }
-
-    function isVideo(fileType) {
-        return ALLOWED_VIDEO_TYPES.includes(fileType) || fileType.startsWith('video/');
-    }
-
-    function clearPreview() {
-        fileInput.value = '';
-
-        const mediaElement = previewContainer.querySelector('img, video');
-        if (mediaElement) {
-            mediaElement.remove();
-        }
-
-        previewZone.classList.add('hidden');
-        dropZone.classList.remove('hidden');
-
-        submitButton.disabled = true;
-        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-
-    if (clearPreviewButton) {
-        clearPreviewButton.addEventListener('click', clearPreview);
-    }
-
-    function handleFileSelection(file) {
-        if (!file) return;
-
-        const isFileTypeImage = isImage(file.type);
-        const isFileTypeVideo = isVideo(file.type);
-
-        let maxSize = 0;
-        let fileTypeLabel = '';
-
-        if (isFileTypeImage) {
-            maxSize = MAX_IMAGE_SIZE_MB * 1024 * 1024;
-            fileTypeLabel = 'Image';
-        } else if (isFileTypeVideo) {
-            maxSize = MAX_VIDEO_SIZE_MB * 1024 * 1024;
-            fileTypeLabel = 'Video';
-        } else {
-            const imageExts = ALLOWED_IMAGE_TYPES.map(t => t.split('/').pop().toUpperCase()).join(', ');
-            const videoExts = ALLOWED_VIDEO_TYPES.map(t => t.split('/').pop().toUpperCase()).join(', ');
-            showMessage(`Invalid file type. Allowed: ${imageExts} or ${videoExts}`, 'error');
-            clearPreview();
-            return;
-        }
-
-        if (file.size > maxSize) {
-            const formattedSize = formatFileSize(file.size);
-            const formattedLimit = formatFileSize(maxSize);
-            showMessage(`File size exceeds the ${formattedLimit} limit for ${fileTypeLabel}. Your file is ${formattedSize}.`, 'error');
-            clearPreview();
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const existingMedia = previewContainer.querySelector('img, video');
-            if (existingMedia) existingMedia.remove();
-
-            let mediaElement;
-
-            if (isFileTypeImage) {
-                mediaElement = document.createElement('img');
-                mediaElement.src = e.target.result;
-            } else if (isFileTypeVideo) {
-                mediaElement = document.createElement('video');
-                mediaElement.src = e.target.result;
-                mediaElement.controls = true;
-                mediaElement.muted = true;
-                mediaElement.autoplay = false;
-                mediaElement.loop = true;
-            }
-
-            if (mediaElement) {
-                mediaElement.className = 'w-full max-h-64 object-contain rounded-lg border border-gray-700 bg-gray-900 p-2';
-
-                previewContainer.prepend(mediaElement);
-
-                dropZone.classList.add('hidden');
-                previewZone.classList.remove('hidden');
-
-                submitButton.disabled = false;
-                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                showMessage('Error generating preview.', 'error');
-            }
-        };
-        reader.readAsDataURL(file);
-    }
-
-
+    // File upload events - FIXED
     fileInput.addEventListener('change', (e) => {
-        handleFileSelection(e.target.files[0]);
+        handleMultipleFiles(e.target.files);
     });
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -603,182 +1182,117 @@
             e.stopPropagation();
         }, false);
     });
+    
     dropZone.addEventListener('dragenter', () => {
         dropZone.classList.add('border-indigo-500', 'bg-gray-700');
     });
+    
     ['dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => {
             dropZone.classList.remove('border-indigo-500', 'bg-gray-700');
         });
     });
+    
     dropZone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         if (dt.files.length > 0) {
-            handleFileSelection(dt.files[0]);
-        } else {
-            showMessage("No file dropped.", 'error');
+            handleMultipleFiles(dt.files);
         }
     });
 
+    // Upload form submit - FIXED
     uploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const file = fileInput.files[0];
-
-        if (!file) {
-            showMessage('Please select a file to upload.', 'error');
+        if (uploadQueueState.length === 0) return;
+        
+        // Don't allow multiple submissions
+        if (hasSubmitted) {
+            showMessage('Upload already in progress. Please wait.', 'error');
             return;
         }
-        submitButton.disabled = true;
-        document.getElementById('button-text').textContent = 'Uploading...';
-        loadingIndicator.classList.remove('hidden');
+        
+        processUploadQueue();
+    });
 
-        const formData = new FormData();
-        formData.append('file', file);
-
-        let response;
-        try {
-            response = await fetchWithTimeout(`${API_BASE_URL}/upload`, {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            }, 120000);
-
-            const data = await response.json();
-            if (data.success) {
-                showMessage('File uploaded successfully!', 'success');
-
-                clearPreview();
-
-                showDetailsView(data.details_id);
-            } else {
-                showMessage(data.error || 'An unknown error occurred.', 'error');
-            }
-        } catch (error) {
-            console.error('Upload error:', error);
-            showMessage('Upload failed.', 'error');
-        } finally {
-            document.getElementById('button-text').textContent = 'Upload Image';
-            loadingIndicator.classList.add('hidden');
-            if (fileInput.files[0]) {
-                submitButton.disabled = false;
-            }
+    cancelAllButton.addEventListener('click', () => {
+        if (confirm('Cancel all uploads?')) {
+            resetUploadQueue();
+            clearPreview();
         }
     });
 
-    function truncateFilename(filename, maxLength = 30) {
-        if (filename.length <= maxLength) return filename;
-        const extensionMatch = filename.match(/\.([0-9a-z]+)$/i);
-        const extension = extensionMatch ? extensionMatch[0] : '';
-        const baseName = extensionMatch ? filename.slice(0, -extension.length) : filename;
-        const maxBaseLength = maxLength - extension.length - 3;
-        if (maxBaseLength <= 0) return filename.substring(0, maxLength - 3) + '...';
-        const cutoff = Math.floor(Math.random() * (maxBaseLength * 0.4)) + Math.floor(maxBaseLength * 0.4);
-        return baseName.substring(0, cutoff) + '...' + extension;
+    // Clear preview button
+    if (clearPreviewButton) {
+        clearPreviewButton.addEventListener('click', clearPreview);
     }
 
-    /**
-     * Displays the details view for a specific image.
-     * @param {number} id - The ID of the image.
-     */
-    async function showDetailsView(id) {
-        currentImageId = id;
-        try {
-            const response = await fetchWithTimeout(`${API_BASE_URL}/image/${id}`, {
-                credentials: 'include'
-            }, 8000);
-            const data = await response.json();
-            if (data.success) {
-                showView('details');
-                const expiryDate = data.expires_at ? new Date(data.expires_at) : null;
-                detailsTitle.textContent = `Image Details: ${truncateFilename(data.filename, 35)}`;
-                shareLinkInput.value = data.url;
-
-                const oldMediaElement = document.getElementById('image-preview');
-                const parent = oldMediaElement.parentElement;
-                const fileUrl = data.url;
-                const fileExtension = data.filename.split('.').pop().toLowerCase();
-                const isVideoFile = ALLOWED_VIDEO_TYPES.some(type => type.endsWith(fileExtension));
-
-                let newMediaElement;
-
-                if (isVideoFile) {
-                    if (oldMediaElement.tagName.toLowerCase() !== 'video') {
-                        newMediaElement = document.createElement('video');
-                        newMediaElement.id = 'image-preview';
-                        newMediaElement.controls = true;
-                        newMediaElement.autoplay = false;
-                        newMediaElement.muted = false;
-                        newMediaElement.loop = false;
-                        newMediaElement.src = fileUrl;
-                        newMediaElement.className = oldMediaElement.className;
-                        parent.replaceChild(newMediaElement, oldMediaElement);
-                    } else {
-                        oldMediaElement.src = fileUrl;
-                    }
-                } else {
-                    if (oldMediaElement.tagName.toLowerCase() !== 'img') {
-                        newMediaElement = document.createElement('img');
-                        newMediaElement.id = 'image-preview';
-                        newMediaElement.alt = 'Image Preview';
-                        newMediaElement.className = oldMediaElement.className;
-                        parent.replaceChild(newMediaElement, oldMediaElement);
-                    } else {
-                        oldMediaElement.src = fileUrl;
-                    }
-                }
-
-                if (expiryDate) {
-                    const now = new Date();
-                    const diffTime = expiryDate.getTime() - now.getTime();
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    const formattedExpiryDate = expiryDate.toLocaleDateString('en-US', {
-                        year: 'numeric', month: 'long', day: 'numeric'
-                    });
-                    if (diffDays <= 3) {
-                        expirationText.textContent = `PURGE ALERT! This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
-                        expirationInfoBox.className = 'bg-red-900/50 border-2 border-red-500 rounded-lg p-3';
-                        expirationText.parentElement.classList.remove('text-blue-300');
-                        expirationText.parentElement.classList.add('text-red-300');
-                        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-triangle-exclamation';
-                    } else {
-                        expirationText.textContent = `This file will be deleted on ${formattedExpiryDate} (${diffDays} days left).`;
-                        expirationInfoBox.className = 'bg-blue-900/50 border-2 border-blue-500 rounded-lg p-3';
-                        expirationText.parentElement.classList.remove('text-red-300');
-                        expirationText.parentElement.classList.add('text-blue-300');
-                        expirationText.parentElement.querySelector('i').className = 'fa-solid fa-circle-info';
-                    }
-                    expirationInfoBox.classList.remove('hidden');
-                } else {
-                    expirationInfoBox.classList.add('hidden');
-                }
-
-                if (data.is_owner) {
-                    deleteButton.classList.remove('hidden');
-                    deleteButton.classList.add('flex', 'items-center', 'justify-center', 'space-x-2');
-                    deleteButton.innerHTML = `<i class="fa-solid fa-trash"></i> <span>Delete Image</span>`;
-                } else {
-                    deleteButton.classList.add('hidden');
-                    deleteButton.classList.remove('flex', 'items-center', 'justify-center', 'space-x-2');
-                }
+    // Video player controls with improved fullscreen
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', () => {
+            if (customVideoPlayer.paused) {
+                customVideoPlayer.play();
+                isVideoPlaying = true;
             } else {
-                showMessage(data.error, 'error');
-                showDashboardView();
+                customVideoPlayer.pause();
+                isVideoPlaying = false;
             }
-        } catch (error) {
-            console.error('Details fetch error:', error);
-            if (error.message.includes('timed out') || error.message.includes('Failed to fetch')) {
-                showMessage('You must be logged in to view file details.', 'error');
+            updatePlayPauseButton();
+        });
+    }
+
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            isVideoMuted = !isVideoMuted;
+            customVideoPlayer.muted = isVideoMuted;
+            updateVolumeUI();
+        });
+    }
+
+    if (volumeSlider) {
+        volumeSlider.addEventListener('click', (e) => {
+            const rect = volumeSlider.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            videoVolume = Math.max(0, Math.min(1, clickX / width));
+            customVideoPlayer.volume = videoVolume;
+            updateVolumeUI();
+        });
+    }
+
+    // Fixed fullscreen implementation
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                videoPlayerContainer.requestFullscreen().catch(err => {
+                    console.error('Error attempting to enable fullscreen:', err);
+                });
             } else {
-                showMessage('Could not load file details.', 'error');
+                document.exitFullscreen();
             }
-            showDashboardView();
+        });
+    }
+
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement === videoPlayerContainer) {
+            videoPlayerContainer.classList.add('fullscreen-active');
+        } else {
+            videoPlayerContainer.classList.remove('fullscreen-active');
         }
+    });
+
+    if (progressBar) {
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const width = rect.width;
+            const percent = clickX / width;
+            customVideoPlayer.currentTime = percent * customVideoPlayer.duration;
+        });
     }
 
-
-    copyButton.addEventListener('click', handleCopy);
-
-    function handleCopy() {
+    // Copy button
+    copyButton.addEventListener('click', () => {
         const textToCopy = shareLinkInput.value;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy)
@@ -794,13 +1308,12 @@
                     }, 2000);
                 })
                 .catch(err => {
-                    console.error('Copy failed using navigator.clipboard.writeText:', err);
                     fallbackCopy();
                 });
         } else {
             fallbackCopy();
         }
-    }
+    });
 
     function fallbackCopy() {
         shareLinkInput.select();
@@ -826,6 +1339,7 @@
         }
     }
 
+    // Delete button
     deleteButton.addEventListener('click', async () => {
         if (!currentImageId) return;
         if (!showConfirm(`Are you sure you want to delete this file? This cannot be undone.`)) {
@@ -845,21 +1359,34 @@
             }
         } catch (error) {
             console.error('Delete error:', error);
-            if (error.message.includes('timed out')) {
-                showMessage('Delete request timed out. Please try again.', 'error');
-            } else {
-                showMessage('Network or server error during deletion.', 'error');
-            }
+            showMessage('Network or server error during deletion.', 'error');
         }
     });
 
+    // Social sharing
+    document.getElementById('twitter-share-button').addEventListener('click', () => {
+        const url = encodeURIComponent(shareLinkInput.value);
+        const text = encodeURIComponent("Check out this file I uploaded on SnapVector!");
+        window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400');
+    });
+
+    document.getElementById('facebook-share-button').addEventListener('click', () => {
+        const url = encodeURIComponent(shareLinkInput.value);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
+    });
+
+    document.getElementById('instagram-share-button').addEventListener('click', () => {
+        showMessage('Open Instagram and create a new post. The file URL has been copied to your clipboard!', 'info');
+        navigator.clipboard.writeText(shareLinkInput.value);
+    });
+
+    // Navigation buttons
     backToUploaderButton.addEventListener('click', showDashboardView);
     homeButton.addEventListener('click', showDashboardView);
     backToDashboardButton.addEventListener('click', showDashboardView);
-
     accountButton.addEventListener('click', showAccountView);
 
-
+    // Account forms
     changeUsernameForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const newUsername = newUsernameInput.value;
@@ -959,208 +1486,6 @@
         }
     });
 
-    async function fetchSessions() {
-        sessionsLoading.classList.remove('hidden');
-        sessionsList.innerHTML = '';
-        sessionsList.appendChild(sessionsLoading);
-
-        try {
-            const response = await fetchWithTimeout(`${API_BASE_URL}/account/sessions`, {
-                credentials: 'include'
-            }, 8000);
-            const data = await response.json();
-
-            sessionsList.innerHTML = '';
-
-            if (data && data.length > 0) {
-                data.forEach(session => {
-                    const { os, browser, icon } = parseUserAgent(session.user_agent);
-                    const loginTime = new Date(session.login_at).toLocaleString();
-                    const isCurrent = (session.hashed_ip === currentUser.last_seen_ip_hash);
-
-                    const li = document.createElement('li');
-                    li.className = "flex items-center justify-between p-3 bg-gray-800 rounded-lg";
-                    li.innerHTML = `
-                        <div class="flex items-center space-x-3">
-                            <i class="fa-solid ${icon} text-2xl text-gray-400 w-6 text-center"></i>
-                            <div>
-                                <p class="font-medium text-white">${os} (${browser})</p>
-                                <p class="text-sm text-gray-400">${loginTime}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                             <p class="text-sm font-mono text-gray-500" title="${session.hashed_ip}">${session.hashed_ip.substring(0, 10)}...</p>
-                             ${isCurrent ? '<span class="text-xs font-bold text-green-400">Current Session</span>' : ''}
-                        </div>
-                    `;
-                    sessionsList.appendChild(li);
-                });
-            } else {
-                sessionsList.innerHTML = `<li class="text-gray-400">No session history found.</li>`;
-            }
-
-        } catch (error) {
-            sessionsList.innerHTML = `<li class="text-red-400">Could not load session history.</li>`;
-        }
-    }
-
-    function parseUserAgent(ua) {
-        let os = "Unknown OS";
-        let browser = "Unknown Browser";
-        let icon = "fa-desktop";
-
-        if (!ua) return { os, browser, icon };
-
-        if (ua.includes("Windows")) { os = "Windows"; icon = "fa-brands fa-windows"; }
-        else if (ua.includes("Macintosh") || ua.includes("Mac OS")) { os = "Mac OS"; icon = "fa-brands fa-apple"; }
-        else if (ua.includes("Linux")) { os = "Linux"; icon = "fa-brands fa-linux"; }
-        else if (ua.includes("Android")) { os = "Android"; icon = "fa-brands fa-android"; }
-        else if (ua.includes("iPhone") || ua.includes("iPad")) { os = "iOS"; icon = "fa-brands fa-apple"; }
-
-        if (ua.includes("Edg/")) { browser = "Edge"; }
-        else if (ua.includes("Chrome")) { browser = "Chrome"; }
-        else if (ua.includes("Firefox")) { browser = "Firefox"; }
-        else if (ua.includes("Safari")) { browser = "Safari"; }
-
-        return { os, browser, icon };
-    }
-
+    // Initialize the app
     checkAuthStatus();
-
-    const statusIndicator = document.getElementById('status-indicator');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const statusModal = document.getElementById('status-modal');
-    const closeStatusModal = document.getElementById('close-status-modal');
-    const apiStatus = document.getElementById('api-status');
-    const statusMessage = document.getElementById('status-message');
-    const lastCheckTime = document.getElementById('last-check-time');
-
-    let statusCheckInterval = null;
-
-    async function checkSystemStatus() {
-        try {
-            const response = await fetchWithTimeout(`${API_BASE_URL}/status`, {
-                credentials: 'include'
-            }, 5000);
-
-            const currentTime = new Date().toLocaleTimeString();
-            lastCheckTime.textContent = currentTime;
-
-            if (response.ok) {
-                const data = await response.json();
-
-                // Determine overall status
-                let overallStatus = 'operational';
-                let statusColor = 'text-green-400';
-                let dotColor = 'bg-green-500';
-
-                if (response.status === 200 || data.status_code === 200 ||
-                    data.status === 'operational' || data.api === 'operational') {
-                    // All good
-                    statusText.textContent = 'All Systems Operational';
-                } else if (data.status === 'degraded' || data.api === 'degraded' ||
-                    response.status === 206 || data.status_code === 206) {
-                    overallStatus = 'degraded';
-                    statusColor = 'text-yellow-400';
-                    dotColor = 'bg-yellow-500';
-                    statusText.textContent = 'Service Degraded';
-                } else {
-                    overallStatus = 'unavailable';
-                    statusColor = 'text-red-400';
-                    dotColor = 'bg-red-500';
-                    statusText.textContent = 'Service Issues Detected';
-                }
-
-                // Update overall status indicator
-                statusDot.className = `w-2 h-2 rounded-full ${dotColor}`;
-
-                // Update all service statuses based on the same response
-                const apiStatusElement = document.getElementById('api-status');
-                const uploadStatusElement = document.getElementById('upload-status');
-                const dbStatusElement = document.getElementById('db-status');
-
-                // Set all to the same status based on overall response
-                if (overallStatus === 'operational') {
-                    apiStatusElement.textContent = 'Operational';
-                    apiStatusElement.className = 'text-xs font-semibold text-green-400';
-                    uploadStatusElement.textContent = 'Operational';
-                    uploadStatusElement.className = 'text-xs font-semibold text-green-400';
-                    dbStatusElement.textContent = 'Operational';
-                    dbStatusElement.className = 'text-xs font-semibold text-green-400';
-                    statusMessage.classList.add('hidden');
-                } else if (overallStatus === 'degraded') {
-                    apiStatusElement.textContent = 'Degraded';
-                    apiStatusElement.className = 'text-xs font-semibold text-yellow-400';
-                    uploadStatusElement.textContent = 'Degraded';
-                    uploadStatusElement.className = 'text-xs font-semibold text-yellow-400';
-                    dbStatusElement.textContent = 'Degraded';
-                    dbStatusElement.className = 'text-xs font-semibold text-yellow-400';
-
-                    statusMessage.querySelector('p').textContent = 'We are experiencing partial service degradation. Some features may be limited.';
-                    statusMessage.className = 'p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg';
-                    statusMessage.classList.remove('hidden');
-                } else {
-                    apiStatusElement.textContent = 'Unavailable';
-                    apiStatusElement.className = 'text-xs font-semibold text-red-400';
-                    uploadStatusElement.textContent = 'Unavailable';
-                    uploadStatusElement.className = 'text-xs font-semibold text-red-400';
-                    dbStatusElement.textContent = 'Unavailable';
-                    dbStatusElement.className = 'text-xs font-semibold text-red-400';
-
-                    statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
-                    statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
-                    statusMessage.classList.remove('hidden');
-                }
-            } else {
-                throw new Error('Status check failed');
-            }
-        } catch (error) {
-            console.error('Status check error:', error);
-
-            // Set all statuses to unavailable on error
-            statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
-            statusText.textContent = 'Service Issues Detected';
-
-            const apiStatusElement = document.getElementById('api-status');
-            const uploadStatusElement = document.getElementById('upload-status');
-            const dbStatusElement = document.getElementById('db-status');
-
-            apiStatusElement.textContent = 'Unavailable';
-            apiStatusElement.className = 'text-xs font-semibold text-red-400';
-            uploadStatusElement.textContent = 'Unavailable';
-            uploadStatusElement.className = 'text-xs font-semibold text-red-400';
-            dbStatusElement.textContent = 'Unavailable';
-            dbStatusElement.className = 'text-xs font-semibold text-red-400';
-
-            statusMessage.querySelector('p').textContent = 'We are experiencing technical difficulties. Some features may be unavailable.';
-            statusMessage.className = 'p-3 bg-red-900/30 border border-red-600 rounded-lg';
-            statusMessage.classList.remove('hidden');
-
-            const currentTime = new Date().toLocaleTimeString();
-            lastCheckTime.textContent = currentTime;
-        }
-    }
-
-    statusIndicator.addEventListener('click', () => {
-        statusModal.classList.remove('hidden');
-        checkSystemStatus();
-    });
-
-    closeStatusModal.addEventListener('click', () => {
-        statusModal.classList.add('hidden');
-    });
-
-    statusModal.addEventListener('click', (e) => {
-        if (e.target === statusModal) {
-            statusModal.classList.add('hidden');
-        }
-    });
-
-    checkSystemStatus();
-
-    statusCheckInterval = setInterval(checkSystemStatus, 60000);
-
-    checkAuthStatus();
-
 });

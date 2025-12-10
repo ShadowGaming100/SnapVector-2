@@ -1,0 +1,17 @@
+{
+  "name": "SnapVector",
+  "short_name": "SnapVector",
+  "description": "Simple Media Sharing for Images, Gifs and Videos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071028",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
