@@ -3,6 +3,8 @@
 ## Overview
 SnapVector is a professional media hosting web application that enables users to upload, view, and share images and videos. It provides a clean UI, theme toggling, user authentication, and account management. This repository contains only the front‑end implementation.
 
+*Note: This project is not open for self-hosting.*
+
 ## Features
 - **User authentication** – Sign in, register, or continue as a guest.  
 - **Theme toggle** – Light/Dark mode with automatic system preference detection.  
@@ -14,16 +16,6 @@ SnapVector is a professional media hosting web application that enables users to
 - **Account settings** – Theme selection, username/password changes, session history.  
 - **Responsive design** – Works on desktop and mobile browsers.
 
-## Getting Started
-
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Edge, Safari).  
- 
-
-### Configuration
- 
-- Modify `manifest.json` if you wish to change PWA settings.  
-- Adjust colors or fonts in `style.css` to suit your branding.
 
 ## Usage
 1. **Sign in** or **register** a new account, or click **Continue as Guest**.  
@@ -60,4 +52,4 @@ This project is licensed under the MIT License – see the `LICENSE` file for de
 - UI inspiration from various media‑hosting platforms.
 
 ## Contact
-For questions, feature requests, or support, open an issue on the GitHub repository.
+For questions, feature requests, or support, open an issue on the GitHub repository, or can email snapvector@outlook.de.
