@@ -35,17 +35,17 @@ SnapVector is a professional media hosting web application that enables users to
 
 ## Project Structure
 ```
-├─ index.html          # Main HTML entry point
-├─ style.css           # Global styles and theme definitions
-├─ script.js           # Front‑end logic (auth, upload, UI)
-├─ manifest.json       # PWA manifest
-├─ README.md           # This documentation
-├─ LICENSE             # MIT License
+├─ index.html        # Main HTML entry point
+├─ style.css         # Global styles and theme definitions
+├─ script.js         # Front‑end logic (auth, upload, UI)
+├─ manifest.json     # PWA manifest
+├─ README.md         # This documentation
+├─ LICENSE           # MIT License
 ├─ admin.html
 ├─ faq.html
 ├─ privacy.html
 ├─ terms.html
-└─ icon.png            # Favicon / app icon
+└─ icon.png          # Favicon / app icon
 ```
 
 ## Contributing
