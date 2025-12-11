@@ -52,4 +52,4 @@ This project is licensed under the MIT License – see the `LICENSE` file for de
 - UI inspiration from various media‑hosting platforms.
 
 ## Contact
-For questions, feature requests, or support, open an issue on the GitHub repository, or can email snapvector@outlook.de.
+For questions, feature requests, or support, open an issue on the GitHub repository, or you can email me at snapvector@outlook.de.
